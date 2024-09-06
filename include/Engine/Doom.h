@@ -34,6 +34,7 @@ class Doom {
 	int m_iRenderHeight;
 
 	bool          m_bIsOver;
+	
 	SDL_Renderer *m_pRenderer;
 	WAD::Loader   m_WADLoader;
 	Map          *m_pMap;

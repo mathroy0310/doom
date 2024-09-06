@@ -62,3 +62,23 @@ struct Thing {
 	uint16_t Type;
 	uint16_t Flags;
 };
+
+struct Node {
+	int16_t XPartition;
+	int16_t YPartition;
+	int16_t ChangeXPartition;
+	int16_t ChangeYPartition;
+
+	int16_t RightBoxTop;
+	int16_t RightBoxBottom;
+	int16_t RightBoxLeft;
+	int16_t RightBoxRight;
+
+	int16_t LeftBoxTop;
+	int16_t LeftBoxBottom;
+	int16_t LeftBoxLeft;
+	int16_t LeftBoxRight;
+
+	uint16_t RightChildID;
+	uint16_t LeftChildID;
+};

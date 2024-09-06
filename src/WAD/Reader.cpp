@@ -7,16 +7,16 @@ WAD::Reader::Reader() {}
 
 WAD::Reader::~Reader() {}
 
-uint16_t WAD::Reader::read2Bytes(const uint8_t *pWADData, int offset) {
-	uint16_t ReadValue;
-	std::memcpy(&ReadValue, pWADData + offset, sizeof(uint16_t));
-	return ReadValue;
+uint16_t WAD::Reader::read2Bytes(const uint8_t *pWADData, int offset) const {
+	uint16_t readValue;
+	std::memcpy(&readValue, pWADData + offset, sizeof(uint16_t));
+	return readValue;
 }
 
-uint32_t WAD::Reader::read4Bytes(const uint8_t *pWADData, int offset) {
-	uint32_t ReadValue;
-	std::memcpy(&ReadValue, pWADData + offset, sizeof(uint32_t));
-	return ReadValue;
+uint32_t WAD::Reader::read4Bytes(const uint8_t *pWADData, int offset) const {
+	uint32_t readValue;
+	std::memcpy(&readValue, pWADData + offset, sizeof(uint32_t));
+	return readValue;
 }
 
 void WAD::Reader::readHeaderData(const uint8_t *pWADData, int offset, Header &header) {
@@ -88,6 +88,26 @@ void WAD::Reader::readThingData(const uint8_t *pWADData, int offset, Thing &thin
 	thing.Type = read2Bytes(pWADData, offset + 6);
 	// 0x08 to 0x09
 	thing.Flags = read2Bytes(pWADData, offset + 8);
+}
+
+void WAD::Reader::readNodesData(const uint8_t *pWADData, int offset, Node &node) {
+	node.XPartition = read2Bytes(pWADData, offset);
+	node.YPartition = read2Bytes(pWADData, offset + 2);
+	node.ChangeXPartition = read2Bytes(pWADData, offset + 4);
+	node.ChangeYPartition = read2Bytes(pWADData, offset + 6);
+
+	node.RightBoxTop = read2Bytes(pWADData, offset + 8);
+	node.RightBoxBottom = read2Bytes(pWADData, offset + 10);
+	node.RightBoxLeft = read2Bytes(pWADData, offset + 12);
+	node.RightBoxRight = read2Bytes(pWADData, offset + 14);
+
+	node.LeftBoxTop = read2Bytes(pWADData, offset + 16);
+	node.LeftBoxBottom = read2Bytes(pWADData, offset + 18);
+	node.LeftBoxLeft = read2Bytes(pWADData, offset + 20);
+	node.LeftBoxRight = read2Bytes(pWADData, offset + 22);
+
+	node.RightChildID = read2Bytes(pWADData, offset + 24);
+	node.LeftChildID = read2Bytes(pWADData, offset + 26);
 }
 
 } // namespace WAD

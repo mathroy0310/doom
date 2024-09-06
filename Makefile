@@ -3,6 +3,8 @@ NAME = DOOM
 CC = clang
 CXX = clang++
 
+
+
 ifdef IN_NIX_SHELL
     CXXFLAGS = -std=c++17 -Wall -g -O2 $(shell pkg-config --cflags sdl2 SDL2_image SDL2_ttf SDL2_mixer)
     LDFLAGS  = $(shell pkg-config --libs sdl2 SDL2_image SDL2_ttf SDL2_mixer)
@@ -11,6 +13,7 @@ else
     LDFLAGS  = -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
 endif
 
+CXXFLAGS += -DDEBUG
 INCLUDE = -Iinclude
 
 MODULES = WAD Engine

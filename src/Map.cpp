@@ -38,19 +38,22 @@ void Map::addThing(Thing &thing) {
 	m_Things.push_back(thing);
 }
 
+void Map::addNode(Node &node) { m_Nodes.push_back(node); }
+
 std::string Map::getName() const { return m_sName; }
 
-int Map::remapXToScreen(int XMapPosition) {
+int Map::remapXToScreen(int XMapPosition) const {
 	return (XMapPosition + (-m_XMin)) / m_iAutoMapScaleFactor;
 }
 
-int Map::remapYToScreen(int YMapPosition) {
+int Map::remapYToScreen(int YMapPosition) const {
 	return m_iRenderYSize - (YMapPosition + (-m_YMin)) / m_iAutoMapScaleFactor;
 }
 
 void Map::renderAutoMap() {
 	renderAutoMapWalls();
 	renderAutoMapPlayer();
+	renderAutoMapNode();
 }
 
 void Map::renderAutoMapPlayer() {
@@ -76,6 +79,22 @@ void Map::renderAutoMapWalls() {
 
 		SDL_RenderDrawLine(m_pRenderer, remapXToScreen(vStart.XPosition), remapYToScreen(vStart.YPosition), remapXToScreen(vEnd.XPosition), remapYToScreen(vEnd.YPosition));
 	}
+}
+
+void Map::renderAutoMapNode() {
+	Node node = m_Nodes[m_Nodes.size() - 1];
+
+	SDL_Rect RightRect = {remapXToScreen(node.RightBoxLeft), remapYToScreen(node.RightBoxTop), remapXToScreen(node.RightBoxRight) - remapXToScreen(node.RightBoxLeft) + 1, remapYToScreen(node.RightBoxBottom) - remapYToScreen(node.RightBoxTop) + 1};
+
+	SDL_Rect LeftRect = {remapXToScreen(node.LeftBoxLeft), remapYToScreen(node.LeftBoxTop), remapXToScreen(node.LeftBoxRight) - remapXToScreen(node.LeftBoxLeft) + 1, remapYToScreen(node.LeftBoxBottom) - remapYToScreen(node.LeftBoxTop) + 1};
+
+	SDL_SetRenderDrawColor(m_pRenderer, 0, 255, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderDrawRect(m_pRenderer, &RightRect);
+	SDL_SetRenderDrawColor(m_pRenderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderDrawRect(m_pRenderer, &LeftRect);
+
+	SDL_SetRenderDrawColor(m_pRenderer, 0, 0, 255, SDL_ALPHA_OPAQUE);
+	SDL_RenderDrawLine(m_pRenderer, remapXToScreen(node.XPartition), remapYToScreen(node.YPartition), remapXToScreen(node.XPartition + node.ChangeXPartition), remapYToScreen(node.YPartition + node.ChangeYPartition));
 }
 
 void Map::setLumpIndex(int iIndex) { m_iLumpIndex = iIndex; }
