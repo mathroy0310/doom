@@ -7,24 +7,23 @@ namespace WAD {
 WAD::Loader::Loader(std::string sFilePath) : m_Data(NULL), m_sFilePath(sFilePath) {}
 
 WAD::Loader::~Loader() {
-    if (m_Data)
-	    delete[] m_Data;
+	if (m_Data) delete[] m_Data;
 	m_Data = NULL;
 }
 
-bool WAD::Loader::LoadWAD() {
-	if (!OpenAndLoad()) {
+bool WAD::Loader::loadWAD() {
+	if (!openAndLoad()) {
 		return false;
 	}
 
-	if (!ReadDirectories()) {
+	if (!readDirectories()) {
 		return false;
 	}
 
 	return true;
 }
 
-bool WAD::Loader::OpenAndLoad() {
+bool WAD::Loader::openAndLoad() {
 	std::cout << "Info: Loading WAD file: " << m_sFilePath << std::endl;
 
 	m_File.open(m_sFilePath, std::ifstream::binary);
@@ -56,28 +55,112 @@ bool WAD::Loader::OpenAndLoad() {
 	return true;
 }
 
-bool WAD::Loader::ReadDirectories() {
+bool WAD::Loader::readDirectories() {
 	WAD::Reader reader;
 
 	Header header;
-	reader.ReadHeaderData(m_Data, 0, header);
+	reader.readHeaderData(m_Data, 0, header);
 
-	std::cout << header.WADType << std::endl;
-	std::cout << header.DirectoryCount << std::endl;
-	std::cout << header.DirectoryOffset << std::endl;
-	std::cout << std::endl << std::endl;
+	// std::cout << header.WADType << std::endl;
+	// std::cout << header.DirectoryCount << std::endl;
+	// std::cout << header.DirectoryOffset << std::endl;
+	// std::cout << std::endl << std::endl;
 
 	Directory directory;
 
 	for (unsigned int i = 0; i < header.DirectoryCount; ++i) {
-		reader.ReadDirectoryData(m_Data, header.DirectoryOffset + i * 16, directory);
+		reader.readDirectoryData(m_Data, header.DirectoryOffset + i * 16, directory);
 
 		m_Directories.push_back(directory);
 
-		std::cout << directory.LumpOffset << std::endl;
-		std::cout << directory.LumpSize << std::endl;
+		// std::cout << directory.LumpOffset << std::endl;
+		// std::cout << directory.LumpSize << std::endl;
 		std::cout << directory.LumpName << std::endl;
-		std::cout << std::endl;
+		// std::cout << std::endl;
+	}
+
+	return true;
+}
+
+bool WAD::Loader::loadMapData(Map &map) {
+	if (!readMapVertex(map)) {
+		std::cout << "Error: Failed to read map vertex from MAP: " << map.getName() << std::endl;
+		return false;
+	}
+
+	if (!readMapLinedef(map)) {
+		std::cout << "Error: Failed to read map linedef from MAP: " << map.getName() << std::endl;
+		return false;
+	}
+	return true;
+}
+
+int WAD::Loader::findMapIndex(Map &map) {
+	for (unsigned int i = 0; i < m_Directories.size(); ++i) {
+		if (m_Directories[i].LumpName == map.getName()) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+bool WAD::Loader::readMapVertex(Map &map) {
+	int iMapIndex = findMapIndex(map);
+
+	if (iMapIndex == -1) {
+		return false;
+	}
+
+	iMapIndex += EMAPLUMPSINDEX::eVERTEXES;
+
+	if (std::strcmp(m_Directories[iMapIndex].LumpName, "VERTEXES") != 0) {
+		return false;
+	}
+
+	int iVertexSizeInBytes = sizeof(Vertex);
+	int iVertexCount = m_Directories[iMapIndex].LumpSize / iVertexSizeInBytes;
+
+	Vertex vertex;
+	for (int i = 0; i < iVertexCount; ++i) {
+		m_Reader.readVertexData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iVertexSizeInBytes, vertex);
+
+		map.addVertex(vertex);
+
+		std::cout << "(" << vertex.XPosition << "," << vertex.YPosition << ")" << std::endl;
+		// std::cout << std::endl;
+	}
+
+	return true;
+}
+
+bool WAD::Loader::readMapLinedef(Map &map) {
+	int iMapIndex = findMapIndex(map);
+	if (iMapIndex == -1) {
+		return false;
+	}
+
+	iMapIndex += EMAPLUMPSINDEX::eLINEDEFS;
+
+	if (std::strcmp(m_Directories[iMapIndex].LumpName, "LINEDEFS") != 0) {
+		return false;
+	}
+
+	int iLinedefSizeInBytes = sizeof(Linedef);
+	int iLinedefCount = m_Directories[iMapIndex].LumpSize / iLinedefSizeInBytes;
+
+	Linedef linedef;
+	for (int i = 0; i < iLinedefCount; ++i) {
+		m_Reader.readLinedefData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iLinedefSizeInBytes, linedef);
+
+		// std::cout << linedef.StartVertex << std::endl;
+		// std::cout << linedef.EndVertex << std::endl;
+		// std::cout << linedef.Flags << std::endl;
+		// std::cout << linedef.LineType << std::endl;
+		// std::cout << linedef.SectorTag << std::endl;
+		// std::cout << linedef.RightSidedef << std::endl;
+		// std::cout << linedef.LeftSidedef << std::endl;
+
+		// std::cout << std::endl;
 	}
 
 	return true;
