@@ -14,6 +14,8 @@ class Game {
 	void render();
 	void update();
 	void delay();
+    void renderPresent();
+    void renderClear();
 
 	bool isOver();
 	bool init();

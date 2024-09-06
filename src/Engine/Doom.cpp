@@ -2,14 +2,15 @@
 
 namespace Engine {
 
-Engine::Doom::Doom() : m_bIsOver(false), m_iRenderWidth(320), m_iRenderHeight(200) {
-	m_pPlayer = new Player(1);
-	m_pMap = new Map("E1M1", m_pPlayer);
-}
+Engine::Doom::Doom(SDL_Renderer *pRenderer)
+    : m_pRenderer(pRenderer), m_bIsOver(false), m_iRenderWidth(320), m_iRenderHeight(200) {}
 
 Engine::Doom::~Doom() { delete m_pMap; }
 
 bool Engine::Doom::init() {
+	m_pPlayer = new Player(1);
+	m_pMap = new Map(m_pRenderer, "E1M1", m_pPlayer);
+
 	m_WADLoader.setWADFilePath(getWADFileName());
 	m_WADLoader.loadWAD();
 
@@ -19,10 +20,10 @@ bool Engine::Doom::init() {
 
 std::string Engine::Doom::getWADFileName() { return "assets/WAD/Doom1.WAD"; }
 
-void Engine::Doom::render(SDL_Renderer *pRenderer) {
-	SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 0);
-	SDL_RenderClear(pRenderer);
-	m_pMap->renderAutoMap(pRenderer);
+void Engine::Doom::render() {
+	SDL_SetRenderDrawColor(m_pRenderer, 0x00, 0x00, 0x00, 0x00);
+	SDL_RenderClear(m_pRenderer);
+	m_pMap->renderAutoMap();
 }
 
 void Engine::Doom::keyPressed(SDL_Event &event) {

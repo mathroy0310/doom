@@ -3,16 +3,17 @@
 #include <SDL.h>
 #include <string>
 
-#include <Map.h>
-#include <WAD/Loader.h>
+#include "Map.h"
+#include "Player.h"
+#include "WAD/Loader.h"
 
 namespace Engine {
 class Doom {
   public:
-	Doom();
+	Doom(SDL_Renderer *pRenderer);
 	~Doom();
 
-	virtual void render(SDL_Renderer *pRenderer);
+	virtual void render();
 	virtual void keyPressed(SDL_Event &event);
 	virtual void keyReleased(SDL_Event &event);
 	virtual void quit();
@@ -32,11 +33,11 @@ class Doom {
 	int m_iRenderWidth;
 	int m_iRenderHeight;
 
-	bool m_bIsOver;
-
-	WAD::Loader m_WADLoader;
-	Map        *m_pMap;
-	Player     *m_pPlayer;
+	bool          m_bIsOver;
+	SDL_Renderer *m_pRenderer;
+	WAD::Loader   m_WADLoader;
+	Map          *m_pMap;
+	Player       *m_pPlayer;
 };
 
 } // namespace Engine

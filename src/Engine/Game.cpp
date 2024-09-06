@@ -4,9 +4,7 @@
 #include <string>
 
 namespace Engine {
-Engine::Game::Game() : m_iWindowWidth(1280), m_iWindowHeight(800) {
-	m_pDoomEngine = new Engine::Doom();
-}
+Engine::Game::Game() : m_iWindowWidth(1280), m_iWindowHeight(800) {}
 
 Engine::Game::~Game() {
 	if (m_pDoomEngine) {
@@ -24,7 +22,7 @@ bool Engine::Game::init() {
 		return false;
 	}
 
-	m_pWindow = SDL_CreateWindow(m_pDoomEngine->getName().c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_iWindowWidth, m_iWindowHeight, SDL_WINDOW_SHOWN);
+	m_pWindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_iWindowWidth, m_iWindowHeight, SDL_WINDOW_SHOWN);
 	if (m_pWindow == nullptr) {
 		std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
 		return false;
@@ -36,17 +34,19 @@ bool Engine::Game::init() {
 		return false;
 	}
 
-	SDL_SetRenderDrawColor(m_pRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+	m_pDoomEngine = new Engine::Doom(m_pRenderer);
+
+	if (SDL_RenderSetLogicalSize(m_pRenderer, m_pDoomEngine->getRenderWidth(), m_pDoomEngine->getRenderHeight()) != 0) {
+		std::cerr << "SDL failed to set logical size! SDL_Error: " << SDL_GetError() << std::endl;
+		return false;
+	}
 
 	if (!m_pDoomEngine->init()) {
 		std::cerr << m_pDoomEngine->getName() << " failed to initialize!" << std::endl;
 		return false;
 	}
 
-	if (SDL_RenderSetLogicalSize(m_pRenderer, m_pDoomEngine->getRenderWidth(), m_pDoomEngine->getRenderHeight()) != 0) {
-		std::cerr << "SDL failed to set logical size! SDL_Error: " << SDL_GetError() << std::endl;
-		return false;
-	}
+	SDL_SetWindowTitle(m_pWindow, m_pDoomEngine->getName().c_str());
 
 	return true;
 }
@@ -71,12 +71,18 @@ void Engine::Game::processInput() {
 }
 
 void Engine::Game::render() {
-	SDL_SetRenderDrawColor(m_pRenderer, 0, 0, 0, 0xFF);
+	renderClear();
+
+	m_pDoomEngine->render();
+
+	renderPresent();
+}
+
+void Engine::Game::renderPresent() { SDL_RenderPresent(m_pRenderer); }
+
+void Engine::Game::renderClear() {
+	SDL_SetRenderDrawColor(m_pRenderer, 0, 0, 0, 0xff);
 	SDL_RenderClear(m_pRenderer);
-
-	m_pDoomEngine->render(m_pRenderer);
-
-	SDL_RenderPresent(m_pRenderer);
 }
 
 void Engine::Game::update() { m_pDoomEngine->update(); }

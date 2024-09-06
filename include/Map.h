@@ -10,32 +10,37 @@
 
 class Map {
   public:
-	Map(std::string sName, Player *pPlayer);
+	Map(SDL_Renderer *pRenderer, std::string sName, Player *pPlayer);
 	~Map();
 
 	void addVertex(Vertex &v);
 	void addLinedef(Linedef &l);
 	void addThing(Thing &thing);
-	void renderAutoMap(SDL_Renderer *pRenderer);
-	void renderAutoMapPlayer(SDL_Renderer *pRenderer, int iXShift, int iYShift);
-	void renderAutoMapWalls(SDL_Renderer *pRenderer, int iXShift, int iYShift);
+	void renderAutoMap();
+	void renderAutoMapPlayer();
+	void renderAutoMapWalls();
 
 	std::string getName() const;
 	void        setLumpIndex(int iLumpIndex);
-	int        getLumpIndex() const;
+	int         getLumpIndex() const;
 
   protected:
+	int                  remapXToScreen(int XMapPosition);
+	int                  remapYToScreen(int YMapPosition);
 	std::string          m_sName;
 	std::vector<Vertex>  m_Vertexes;
 	std::vector<Linedef> m_Linedef;
 	std::vector<Thing>   m_Things;
 
-	int m_XMin;
-	int m_XMax;
-	int m_YMin;
-	int m_YMax;
-	int m_iAutoMapScaleFactor;
-	int m_iLumpIndex;
+	int           m_XMin;
+	int           m_XMax;
+	int           m_YMin;
+	int           m_YMax;
+	int           m_iRenderXSize;
+	int           m_iRenderYSize;
+	int           m_iAutoMapScaleFactor;
+	int           m_iLumpIndex;
 
-	Player *m_pPlayer;
+	SDL_Renderer *m_pRenderer;
+	Player       *m_pPlayer;
 };
