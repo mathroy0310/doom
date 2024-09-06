@@ -1,13 +1,18 @@
-#include "Map.h"
-#include "WAD/Loader.h"
 #include <iostream>
 
+
+#include "Engine/Game.h"
+
 int main() {
-	WAD::Loader wadloader("assets/WAD/Doom1.WAD");
-	wadloader.loadWAD();
+    Engine::Game game;
+    game.init();
 
-	Map map("E1M1");
-	wadloader.loadMapData(map);
-
+    while (!game.isOver())
+    {
+        game.processInput();
+        game.update();
+        game.render();
+        game.delay();
+    }
 	return 0;
 }

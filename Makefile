@@ -13,7 +13,7 @@ endif
 
 INCLUDE = -Iinclude
 
-MODULES = WAD
+MODULES = WAD Engine
 SRC_DIRS = $(addprefix src/,$(MODULES)) src
 SRCS  = $(foreach sdir,$(SRC_DIRS),$(wildcard $(sdir)/*.cpp))
 

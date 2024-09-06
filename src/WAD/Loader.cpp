@@ -4,12 +4,14 @@
 
 namespace WAD {
 
-WAD::Loader::Loader(std::string sFilePath) : m_Data(NULL), m_sFilePath(sFilePath) {}
+WAD::Loader::Loader() : m_Data(NULL) {}
 
 WAD::Loader::~Loader() {
 	if (m_Data) delete[] m_Data;
 	m_Data = NULL;
 }
+
+void WAD::Loader::setWADFilePath(std::string sFilePath) { m_sFilePath = sFilePath; }
 
 bool WAD::Loader::loadWAD() {
 	if (!openAndLoad()) {
@@ -75,37 +77,38 @@ bool WAD::Loader::readDirectories() {
 
 		// std::cout << directory.LumpOffset << std::endl;
 		// std::cout << directory.LumpSize << std::endl;
-		std::cout << directory.LumpName << std::endl;
+		//std::cout << directory.LumpName << std::endl;
 		// std::cout << std::endl;
 	}
 
 	return true;
 }
 
-bool WAD::Loader::loadMapData(Map &map) {
-	if (!readMapVertex(map)) {
-		std::cout << "Error: Failed to read map vertex from MAP: " << map.getName() << std::endl;
+bool WAD::Loader::loadMapData(Map *pMap) {
+	if (!readMapVertex(pMap)) {
+		std::cout << "Error: Failed to read map vertex from MAP: " << pMap->getName() << std::endl;
 		return false;
 	}
 
-	if (!readMapLinedef(map)) {
-		std::cout << "Error: Failed to read map linedef from MAP: " << map.getName() << std::endl;
+	if (!readMapLinedef(pMap)) {
+		std::cout << "Error: Failed to read map linedef from MAP: " << pMap->getName() << std::endl;
 		return false;
 	}
 	return true;
 }
 
-int WAD::Loader::findMapIndex(Map &map) {
-	for (unsigned int i = 0; i < m_Directories.size(); ++i) {
-		if (m_Directories[i].LumpName == map.getName()) {
+int WAD::Loader::findMapIndex(Map *pMap) {
+	for (int i = 0; i < m_Directories.size(); ++i) {
+		if (m_Directories[i].LumpName == pMap->getName()) {
 			return i;
 		}
 	}
+
 	return -1;
 }
 
-bool WAD::Loader::readMapVertex(Map &map) {
-	int iMapIndex = findMapIndex(map);
+bool WAD::Loader::readMapVertex(Map *pMap) {
+	int iMapIndex = findMapIndex(pMap);
 
 	if (iMapIndex == -1) {
 		return false;
@@ -124,17 +127,17 @@ bool WAD::Loader::readMapVertex(Map &map) {
 	for (int i = 0; i < iVertexCount; ++i) {
 		m_Reader.readVertexData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iVertexSizeInBytes, vertex);
 
-		map.addVertex(vertex);
+		pMap->addVertex(vertex);
 
-		std::cout << "(" << vertex.XPosition << "," << vertex.YPosition << ")" << std::endl;
+		//std::cout << "(" << vertex.XPosition << "," << vertex.YPosition << ")" << std::endl;
 		// std::cout << std::endl;
 	}
 
 	return true;
 }
 
-bool WAD::Loader::readMapLinedef(Map &map) {
-	int iMapIndex = findMapIndex(map);
+bool WAD::Loader::readMapLinedef(Map *pMap) {
+	int iMapIndex = findMapIndex(pMap);
 	if (iMapIndex == -1) {
 		return false;
 	}

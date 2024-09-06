@@ -13,18 +13,20 @@
 namespace WAD {
 class Loader {
   public:
-	Loader(std::string sWADFilePath);
+	Loader();
 	~Loader();
 
+	void setWADFilePath(std::string sFilePath);
+
 	bool loadWAD();
-	bool loadMapData(Map &map);
+	bool loadMapData(Map *pMap);
 
   protected:
 	bool openAndLoad();
 	bool readDirectories();
-	bool readMapVertex(Map &map);
-	bool readMapLinedef(Map &map);
-	int  findMapIndex(Map &map);
+	bool readMapVertex(Map *pMap);
+	bool readMapLinedef(Map *pMap);
+	int  findMapIndex(Map *pMap);
 
 	std::string            m_sFilePath;
 	std::ifstream          m_File;
