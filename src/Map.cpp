@@ -84,18 +84,20 @@ void Map::renderBSPNodes(int iNodeID) {
 
 void Map::renderSubsector(int iSubsectorID) {
 	Subsector subsector = m_Subsector[iSubsectorID];
-	SDL_SetRenderDrawColor(m_pRenderer, rand() % 255, rand() % 255, rand() % 255, SDL_ALPHA_OPAQUE);
+	SDL_SetRenderDrawColor(m_pRenderer, 0, 255, 255, SDL_ALPHA_OPAQUE);
 
 	for (int i = 0; i < subsector.SegCount; i++) {
 		Seg seg = m_Segs[subsector.FirstSegID + i];
-		SDL_RenderDrawLine(m_pRenderer, remapXToScreen(m_Vertexes[seg.StartVertexID].XPosition),
-		                   remapYToScreen(m_Vertexes[seg.StartVertexID].YPosition),
-		                   remapXToScreen(m_Vertexes[seg.EndVertexID].XPosition),
-		                   remapYToScreen(m_Vertexes[seg.EndVertexID].YPosition));
+        Angle V1Angle, V2Angle;
+        if (m_pPlayer->clipVertexesInFOV(m_Vertexes[seg.StartVertexID], m_Vertexes[seg.EndVertexID], V1Angle, V2Angle))
+        {
+            SDL_RenderDrawLine(m_pRenderer,
+                remapXToScreen(m_Vertexes[seg.StartVertexID].XPosition),
+                remapYToScreen(m_Vertexes[seg.StartVertexID].YPosition),
+                remapXToScreen(m_Vertexes[seg.EndVertexID].XPosition),
+                remapYToScreen(m_Vertexes[seg.EndVertexID].YPosition));
+        }
 	}
-
-	SDL_RenderPresent(m_pRenderer);
-	SDL_Delay(50);
 }
 
 bool Map::isPointOnLeftSide(int XPosition, int YPosition, int iNodeID) {
