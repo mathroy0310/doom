@@ -11,6 +11,7 @@ Engine::Doom::~Doom() { delete m_pMap; }
 bool Engine::Doom::init() {
 	m_WADLoader.setWADFilePath(getWADFileName());
 	m_WADLoader.loadWAD();
+
 	m_WADLoader.loadMapData(m_pMap);
 	return true;
 }
@@ -18,8 +19,9 @@ bool Engine::Doom::init() {
 std::string Engine::Doom::getWADFileName() { return "assets/WAD/Doom1.WAD"; }
 
 void Engine::Doom::render(SDL_Renderer *pRenderer) {
-	SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 0x00);
+	SDL_SetRenderDrawColor(pRenderer, 0, 0, 0, 0);
 	SDL_RenderClear(pRenderer);
+	m_pMap->renderAutoMap(pRenderer);
 }
 
 void Engine::Doom::keyPressed(SDL_Event &event) {

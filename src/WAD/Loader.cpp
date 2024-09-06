@@ -77,7 +77,7 @@ bool WAD::Loader::readDirectories() {
 
 		// std::cout << directory.LumpOffset << std::endl;
 		// std::cout << directory.LumpSize << std::endl;
-		//std::cout << directory.LumpName << std::endl;
+		// std::cout << directory.LumpName << std::endl;
 		// std::cout << std::endl;
 	}
 
@@ -129,8 +129,8 @@ bool WAD::Loader::readMapVertex(Map *pMap) {
 
 		pMap->addVertex(vertex);
 
-		//std::cout << "(" << vertex.XPosition << "," << vertex.YPosition << ")" << std::endl;
-		// std::cout << std::endl;
+		// std::cout << "(" << vertex.XPosition << "," << vertex.YPosition << ")" << std::endl;
+		//  std::cout << std::endl;
 	}
 
 	return true;
@@ -155,6 +155,8 @@ bool WAD::Loader::readMapLinedef(Map *pMap) {
 	for (int i = 0; i < iLinedefCount; ++i) {
 		m_Reader.readLinedefData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iLinedefSizeInBytes, linedef);
 
+		pMap->addLinedef(linedef);
+		
 		// std::cout << linedef.StartVertex << std::endl;
 		// std::cout << linedef.EndVertex << std::endl;
 		// std::cout << linedef.Flags << std::endl;

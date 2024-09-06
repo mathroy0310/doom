@@ -36,7 +36,7 @@ $(NAME): $(OBJS)
 .PHONY: clean
 clean:
 	rm -f $(NAME)
-	@rmdir $(OBJ_DIR) 2>/dev/null || true
+	rm -rf $(OBJ_DIR)
 
 .PHONY: run
 run: $(NAME)
