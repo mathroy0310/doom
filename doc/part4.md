@@ -1,4 +1,4 @@
-# PART3 - Drawing loaded map
+# PART4 - Drawing loaded map
 
 this part is also kind off simple since we impliment automap
 this is not like doom does its only as a proof of concept really

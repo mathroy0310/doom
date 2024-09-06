@@ -26,6 +26,7 @@ class Loader {
 	bool readDirectories();
 	bool readMapVertex(Map *pMap);
 	bool readMapLinedef(Map *pMap);
+	bool readMapThing(Map *pMap);
 	int  findMapIndex(Map *pMap);
 
 	std::string            m_sFilePath;

@@ -26,7 +26,7 @@ bool WAD::Loader::loadWAD() {
 }
 
 bool WAD::Loader::openAndLoad() {
-	std::cout << "Info: Loading WAD file: " << m_sFilePath << std::endl;
+	std::cout << "INFO: Loading WAD file: " << m_sFilePath << std::endl;
 
 	m_File.open(m_sFilePath, std::ifstream::binary);
 	if (!m_File.is_open()) {
@@ -53,7 +53,7 @@ bool WAD::Loader::openAndLoad() {
 
 	m_File.close();
 
-	std::cout << "Info: Loading complete." << std::endl;
+	std::cout << "INFO: Loading complete." << std::endl;
 	return true;
 }
 
@@ -85,13 +85,21 @@ bool WAD::Loader::readDirectories() {
 }
 
 bool WAD::Loader::loadMapData(Map *pMap) {
+	std::cout << "INFO: Parsing Map: " << pMap->getName() << std::endl;
+
+	std::cout << "INFO: Processing Map Vertex" << std::endl;
 	if (!readMapVertex(pMap)) {
 		std::cout << "Error: Failed to read map vertex from MAP: " << pMap->getName() << std::endl;
 		return false;
 	}
-
+	std::cout << "INFO: Processing Map Linedef" << std::endl;
 	if (!readMapLinedef(pMap)) {
 		std::cout << "Error: Failed to read map linedef from MAP: " << pMap->getName() << std::endl;
+		return false;
+	}
+	std::cout << "INFO: Processing Map Things" << std::endl;
+	if (!readMapThing(pMap)) {
+		std::cout << "Error: Failed to load map thing data MAP: " << pMap->getName() << std::endl;
 		return false;
 	}
 	return true;
@@ -156,7 +164,7 @@ bool WAD::Loader::readMapLinedef(Map *pMap) {
 		m_Reader.readLinedefData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iLinedefSizeInBytes, linedef);
 
 		pMap->addLinedef(linedef);
-		
+
 		// std::cout << linedef.StartVertex << std::endl;
 		// std::cout << linedef.EndVertex << std::endl;
 		// std::cout << linedef.Flags << std::endl;
@@ -168,6 +176,37 @@ bool WAD::Loader::readMapLinedef(Map *pMap) {
 		// std::cout << std::endl;
 	}
 
+	return true;
+}
+
+bool WAD::Loader::readMapThing(Map *pMap) {
+	int iMapIndex = findMapIndex(pMap);
+	if (iMapIndex == -1) {
+		return false;
+	}
+
+	iMapIndex += EMAPLUMPSINDEX::eTHINGS;
+
+	if (std::strcmp(m_Directories[iMapIndex].LumpName, "THINGS") != 0) {
+		return false;
+	}
+
+	int iThingsSizeInBytes = sizeof(Thing);
+	int iThingsCount = m_Directories[iMapIndex].LumpSize / iThingsSizeInBytes;
+
+	Thing thing;
+	for (int i = 0; i < iThingsCount; i++) {
+		m_Reader.readThingData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iThingsSizeInBytes, thing);
+
+		pMap->addThing(thing);
+
+		// std::cout << thing.XPosition << std::endl;
+		// std::cout << thing.YPosition << std::endl;
+		// std::cout << thing.Angle << std::endl;
+		// std::cout << thing.Type << std::endl;
+		// std::cout << thing.Flags << std::endl;
+		// std::cout << std::endl;
+	}
 	return true;
 }
 

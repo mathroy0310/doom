@@ -35,7 +35,8 @@ class Doom {
 	bool m_bIsOver;
 
 	WAD::Loader m_WADLoader;
-	Map      *m_pMap;
+	Map        *m_pMap;
+	Player     *m_pPlayer;
 };
 
 } // namespace Engine

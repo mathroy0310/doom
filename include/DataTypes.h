@@ -54,3 +54,11 @@ struct Linedef {
 	uint16_t RightSidedef; // 0xFFFF means there is no sidedef
 	uint16_t LeftSidedef;  // 0xFFFF means there is no sidedef
 };
+
+struct Thing {
+	int16_t  XPosition;
+	int16_t  YPosition;
+	uint16_t Angle;
+	uint16_t Type;
+	uint16_t Flags;
+};

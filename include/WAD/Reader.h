@@ -14,6 +14,7 @@ class Reader {
 	void readDirectoryData(const uint8_t *pWADData, int offset, Directory &directory);
 	void readVertexData(const uint8_t *pWADData, int offset, Vertex &vertex);
 	void readLinedefData(const uint8_t *pWADData, int offset, Linedef &linedef);
+	void readThingData(const uint8_t *pWADData, int offset, Thing &thing);
 
   protected:
 	uint16_t read2Bytes(const uint8_t *pWADData, int offset);
