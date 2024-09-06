@@ -110,4 +110,18 @@ void WAD::Reader::readNodesData(const uint8_t *pWADData, int offset, Node &node)
 	node.LeftChildID = read2Bytes(pWADData, offset + 26);
 }
 
+void WAD::Reader::readSubsectorData(const uint8_t *pWADData, int offset, Subsector &subsector) {
+	subsector.SegCount = read2Bytes(pWADData, offset);
+	subsector.FirstSegID = read2Bytes(pWADData, offset + 2);
+}
+
+void WAD::Reader::readSegData(const uint8_t *pWADData, int offset, Seg &seg) {
+	seg.StartVertexID = read2Bytes(pWADData, offset);
+	seg.EndVertexID = read2Bytes(pWADData, offset + 2);
+	seg.Angle = read2Bytes(pWADData, offset + 4);
+	seg.LinedefID = read2Bytes(pWADData, offset + 6);
+	seg.Direction = read2Bytes(pWADData, offset + 8);
+	seg.Offset = read2Bytes(pWADData, offset + 10);
+}
+
 } // namespace WAD

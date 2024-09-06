@@ -16,6 +16,8 @@ class Reader {
 	void readLinedefData(const uint8_t *pWADData, int offset, Linedef &linedef);
 	void readThingData(const uint8_t *pWADData, int offset, Thing &thing);
 	void readNodesData(const uint8_t *pWADData, int offset, Node &node);
+	void readSubsectorData(const uint8_t *pWADData, int offset, Subsector &subsector);
+	void readSegData(const uint8_t *pWADData, int offset, Seg &seg);
 
   protected:
 	uint16_t read2Bytes(const uint8_t *pWADData, int offset) const;

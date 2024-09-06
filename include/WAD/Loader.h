@@ -28,8 +28,10 @@ class Loader {
 	bool readMapLinedef(Map *pMap);
 	bool readMapThing(Map *pMap);
 	bool readMapNodes(Map *pMap);
-	
-	int  findMapIndex(Map *pMap);
+	bool readMapSubsectors(Map *pMap);
+	bool readMapSegs(Map *pMap);
+
+	int findMapIndex(Map *pMap);
 
 	std::string            m_sFilePath;
 	std::ifstream          m_File;

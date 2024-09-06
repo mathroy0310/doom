@@ -17,24 +17,36 @@ class Map {
 	void addLinedef(Linedef &l);
 	void addThing(Thing &thing);
 	void addNode(Node &node);
+	void addSubsector(Subsector &subsector);
+	void addSeg(Seg &seg);
 
 	void renderAutoMap();
-	void renderAutoMapPlayer();
-	void renderAutoMapWalls();
-	void renderAutoMapNode();
 
 	std::string getName() const;
 	void        setLumpIndex(int iLumpIndex);
 	int         getLumpIndex() const;
 
   protected:
-	int                  remapXToScreen(int XMapPosition) const;
-	int                  remapYToScreen(int YMapPosition) const;
-	std::string          m_sName;
-	std::vector<Vertex>  m_Vertexes;
-	std::vector<Linedef> m_Linedef;
-	std::vector<Thing>   m_Things;
-	std::vector<Node>    m_Nodes;
+	void renderAutoMapPlayer();
+	void renderAutoMapWalls();
+	void renderAutoMapNode(int iNodeID);
+	void renderBSPNodes();
+	void renderBSPNodes(int iNodeID);
+	void renderSubsector(int iSubsectorID);
+
+	int remapXToScreen(int XMapPosition) const;
+	int remapYToScreen(int YMapPosition) const;
+
+	bool isPointOnLeftSide(int XPosition, int YPosition, int iNodeID);
+
+  private:
+	std::string            m_sName;
+	std::vector<Vertex>    m_Vertexes;
+	std::vector<Linedef>   m_Linedef;
+	std::vector<Thing>     m_Things;
+	std::vector<Node>      m_Nodes;
+	std::vector<Subsector> m_Subsector;
+	std::vector<Seg>       m_Segs;
 
 	int m_XMin;
 	int m_XMax;

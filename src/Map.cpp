@@ -40,6 +40,10 @@ void Map::addThing(Thing &thing) {
 
 void Map::addNode(Node &node) { m_Nodes.push_back(node); }
 
+void Map::addSubsector(Subsector &subsector) { m_Subsector.push_back(subsector); }
+
+void Map::addSeg(Seg &seg) { m_Segs.push_back(seg); }
+
 std::string Map::getName() const { return m_sName; }
 
 int Map::remapXToScreen(int XMapPosition) const {
@@ -53,7 +57,52 @@ int Map::remapYToScreen(int YMapPosition) const {
 void Map::renderAutoMap() {
 	renderAutoMapWalls();
 	renderAutoMapPlayer();
-	renderAutoMapNode();
+	// renderAutoMapNode();
+	renderBSPNodes();
+}
+
+void Map::renderBSPNodes() { renderBSPNodes(m_Nodes.size() - 1); }
+
+void Map::renderBSPNodes(int iNodeID) {
+	// masking all the bit except the last
+	//  to check if its a subsector or not
+	if (iNodeID & SUBSECTORIDENTIFIER) {
+		renderSubsector(iNodeID & (~SUBSECTORIDENTIFIER));
+		return;
+	}
+
+	bool isOnLeft = isPointOnLeftSide(m_pPlayer->getXPosition(), m_pPlayer->getYPosition(), iNodeID);
+
+	if (isOnLeft) {
+		renderBSPNodes(m_Nodes[iNodeID].LeftChildID);
+		renderBSPNodes(m_Nodes[iNodeID].RightChildID);
+	} else {
+		renderBSPNodes(m_Nodes[iNodeID].RightChildID);
+		renderBSPNodes(m_Nodes[iNodeID].LeftChildID);
+	}
+}
+
+void Map::renderSubsector(int iSubsectorID) {
+	Subsector subsector = m_Subsector[iSubsectorID];
+	SDL_SetRenderDrawColor(m_pRenderer, rand() % 255, rand() % 255, rand() % 255, SDL_ALPHA_OPAQUE);
+
+	for (int i = 0; i < subsector.SegCount; i++) {
+		Seg seg = m_Segs[subsector.FirstSegID + i];
+		SDL_RenderDrawLine(m_pRenderer, remapXToScreen(m_Vertexes[seg.StartVertexID].XPosition),
+		                   remapYToScreen(m_Vertexes[seg.StartVertexID].YPosition),
+		                   remapXToScreen(m_Vertexes[seg.EndVertexID].XPosition),
+		                   remapYToScreen(m_Vertexes[seg.EndVertexID].YPosition));
+	}
+
+	SDL_RenderPresent(m_pRenderer);
+	SDL_Delay(50);
+}
+
+bool Map::isPointOnLeftSide(int XPosition, int YPosition, int iNodeID) {
+	int dx = XPosition - m_Nodes[iNodeID].XPartition;
+	int dy = YPosition - m_Nodes[iNodeID].YPartition;
+
+	return (((dx * m_Nodes[iNodeID].ChangeYPartition) - (dy * m_Nodes[iNodeID].ChangeXPartition)) <= 0);
 }
 
 void Map::renderAutoMapPlayer() {
@@ -81,8 +130,8 @@ void Map::renderAutoMapWalls() {
 	}
 }
 
-void Map::renderAutoMapNode() {
-	Node node = m_Nodes[m_Nodes.size() - 1];
+void Map::renderAutoMapNode(int iNodeID) {
+	Node node = m_Nodes[iNodeID];
 
 	SDL_Rect RightRect = {remapXToScreen(node.RightBoxLeft), remapYToScreen(node.RightBoxTop), remapXToScreen(node.RightBoxRight) - remapXToScreen(node.RightBoxLeft) + 1, remapYToScreen(node.RightBoxBottom) - remapYToScreen(node.RightBoxTop) + 1};
 
