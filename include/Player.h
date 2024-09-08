@@ -2,23 +2,27 @@
 
 #include "Angle.h"
 #include "DataTypes.h"
-#include <SDL.h>
+#include "Things.h"
+#include "ViewRenderer.h"
 
 class Player {
   public:
-	Player(int iID);
+	Player(ViewRenderer *pViewRenderer, int iID);
 	~Player();
 
+	void init(Thing thing);
 	void setXPosition(int XPosition);
 	void setYPosition(int YPosition);
 	void setAngle(int Angle);
 	void rotateLeft();
 	void rotateRight();
 
-	int   getID() const;
-	int   getXPosition() const;
-	int   getYPosition() const;
-	
+	void renderAutoMap();
+
+	int getID() const;
+	int getXPosition() const;
+	int getYPosition() const;
+
 	Angle getAngle() const;
 
 	bool  clipVertexesInFOV(Vertex &V1, Vertex &V2, Angle &V1Angle, Angle &V2Angle);
@@ -32,5 +36,6 @@ class Player {
 	int m_iRotationSpeed;
 	int m_iMovementSpeed;
 
-	Angle m_Angle;
+	Angle         m_Angle;
+	ViewRenderer *m_pViewRenderer;
 };

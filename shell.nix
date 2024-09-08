@@ -4,6 +4,9 @@ pkgs.mkShell {
   buildInputs = with pkgs; [
     gnumake
     # cmake
+
+    clang
+    llvm
     pkg-config
 
     SDL2

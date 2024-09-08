@@ -5,6 +5,7 @@
 
 #include "Map.h"
 #include "Player.h"
+#include "ViewRenderer.h"
 #include "WAD/Loader.h"
 
 namespace Engine {
@@ -22,23 +23,26 @@ class Doom {
 	virtual bool isOver();
 	virtual bool init();
 
-	virtual int getRenderWidth();
-	virtual int getRenderHeight();
-	virtual int getTimePerFrame();
+	virtual int getRenderWidth() const;
+	virtual int getRenderHeight() const;
+	virtual int getTimePerFrame() const;
 
-	virtual std::string getName();
-	virtual std::string getWADFileName();
+	virtual std::string getName() const;
+	virtual std::string getWADFileName() const;
 
   protected:
 	int m_iRenderWidth;
 	int m_iRenderHeight;
 
-	bool          m_bIsOver;
-	
+	bool m_bIsOver;
+	bool m_bRenderAutoMap;
+
 	SDL_Renderer *m_pRenderer;
-	WAD::Loader   m_WADLoader;
+	WAD::Loader     m_WADLoader;
 	Map          *m_pMap;
 	Player       *m_pPlayer;
+	Things       *m_pThings;
+	ViewRenderer *m_pViewRenderer;
 };
 
 } // namespace Engine

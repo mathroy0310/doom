@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Angle.h"
 #include <cstdint>
 
 // 16th bit identifier
@@ -7,7 +8,8 @@
 #define SUBSECTORIDENTIFIER 0x8000
 
 enum EMAPLUMPSINDEX {
-	eTHINGS = 1,
+	eName,
+	eTHINGS,
 	eLINEDEFS,
 	eSIDEDDEFS,
 	eVERTEXES,
@@ -44,14 +46,60 @@ struct Directory {
 	char     LumpName[9];
 };
 
+struct Thing {
+	int16_t  XPosition;
+	int16_t  YPosition;
+	uint16_t Angle;
+	uint16_t Type;
+	uint16_t Flags;
+};
+
 struct Vertex {
 	int16_t XPosition;
 	int16_t YPosition;
 };
 
-struct Linedef {
-	uint16_t StartVertex;
-	uint16_t EndVertex;
+struct WADSector {
+	int16_t  FloorHeight;
+	int16_t  CeilingHeight;
+	char     FloorTexture[8];
+	char     CeilingTexture[8];
+	uint16_t Lightlevel;
+	uint16_t Type;
+	uint16_t Tag;
+};
+
+struct Sector {
+	int16_t  FloorHeight;
+	int16_t  CeilingHeight;
+	char     FloorTexture[9];
+	char     CeilingTexture[9];
+	uint16_t Lightlevel;
+	uint16_t Type;
+	uint16_t Tag;
+};
+
+struct WADSidedef {
+	int16_t  XOffset;
+	int16_t  YOffset;
+	char     UpperTexture[8];
+	char     LowerTexture[8];
+	char     MiddleTexture[8];
+	uint16_t SectorID;
+};
+
+struct Sidedef {
+	int16_t XOffset;
+	int16_t YOffset;
+	char    UpperTexture[9];
+	char    LowerTexture[9];
+	char    MiddleTexture[9];
+	Sector *pSector;
+};
+
+struct WADLinedef {
+	uint16_t StartVertexID;
+	uint16_t EndVertexID;
 	uint16_t Flags;
 	uint16_t LineType;
 	uint16_t SectorTag;
@@ -59,12 +107,34 @@ struct Linedef {
 	uint16_t LeftSidedef;  // 0xFFFF means there is no sidedef
 };
 
-struct Thing {
-	int16_t  XPosition;
-	int16_t  YPosition;
-	uint16_t Angle;
-	uint16_t Type;
+struct Linedef {
+	Vertex  *pStartVertex;
+	Vertex  *pEndVertex;
 	uint16_t Flags;
+	uint16_t LineType;
+	uint16_t SectorTag;
+	Sidedef *pRightSidedef;
+	Sidedef *pLeftSidedef;
+};
+
+struct WADSeg {
+	uint16_t StartVertexID;
+	uint16_t EndVertexID;
+	uint16_t SlopeAngle;
+	uint16_t LinedefID;
+	uint16_t Direction; // 0 same as linedef, 1 opposite of linedef
+	uint16_t Offset;    // distance along linedef to start of seg
+};
+
+struct Seg {
+	Vertex  *pStartVertex;
+	Vertex  *pEndVertex;
+	Angle    SlopeAngle;
+	Linedef *pLinedef;
+	uint16_t Direction; // 0 same as linedef, 1 opposite of linedef
+	uint16_t Offset;    // distance along linedef to start of seg
+	Sector  *pRightSector;
+	Sector  *pLeftSector;
 };
 
 struct Node {
@@ -90,13 +160,4 @@ struct Node {
 struct Subsector {
 	uint16_t SegCount;
 	uint16_t FirstSegID;
-};
-
-struct Seg {
-	uint16_t StartVertexID;
-	uint16_t EndVertexID;
-	uint16_t Angle;
-	uint16_t LinedefID;
-	uint16_t Direction; // 0 same as linedef, 1 opposite of linedef
-	uint16_t Offset;    // distance along linedef to start of seg
 };

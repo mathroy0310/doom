@@ -4,7 +4,7 @@
 #include <string>
 
 namespace Engine {
-Engine::Game::Game() : m_iWindowWidth(1280), m_iWindowHeight(800) {}
+Engine::Game::Game() : m_iWindowWidth(1280), m_iWindowHeight(800), m_pWindow(nullptr) {}
 
 Engine::Game::~Game() {
 	if (m_pDoomEngine) {
@@ -22,7 +22,7 @@ bool Engine::Game::init() {
 		return false;
 	}
 
-	m_pWindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_iWindowWidth, m_iWindowHeight, SDL_WINDOW_SHOWN);
+	m_pWindow = SDL_CreateWindow(nullptr, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, m_iWindowWidth, m_iWindowHeight, SDL_WINDOW_SHOWN);
 	if (m_pWindow == nullptr) {
 		std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
 		return false;
@@ -70,24 +70,11 @@ void Engine::Game::processInput() {
 	}
 }
 
-void Engine::Game::render() {
-	renderClear();
-
-	m_pDoomEngine->render();
-
-	renderPresent();
-}
-
-void Engine::Game::renderPresent() { SDL_RenderPresent(m_pRenderer); }
-
-void Engine::Game::renderClear() {
-	SDL_SetRenderDrawColor(m_pRenderer, 0, 0, 0, 0xff);
-	SDL_RenderClear(m_pRenderer);
-}
+void Engine::Game::render() { m_pDoomEngine->render(); }
 
 void Engine::Game::update() { m_pDoomEngine->update(); }
 
-bool Engine::Game::isOver() { return m_pDoomEngine->isOver(); }
+bool Engine::Game::isOver() const { return m_pDoomEngine->isOver(); }
 
 void Engine::Game::delay() { SDL_Delay(m_pDoomEngine->getTimePerFrame()); }
 

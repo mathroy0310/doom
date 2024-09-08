@@ -4,8 +4,11 @@
 
 Angle::Angle() : m_Angle(0) {}
 
-Angle::Angle(float angle) : m_Angle(angle) { normalize360(); }
-
+Angle::Angle(float angle)
+{
+    m_Angle = angle;
+    normalize360();
+}
 Angle::~Angle() {}
 
 Angle Angle::operator=(const float &rhs) {

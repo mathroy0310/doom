@@ -1,14 +1,12 @@
 #include "WAD/Loader.h"
-#include "WAD/Reader.h"
 #include <iostream>
 
 namespace WAD {
 
-WAD::Loader::Loader() : m_Data(NULL) {}
+WAD::Loader::Loader() : m_Data(nullptr) {}
 
 WAD::Loader::~Loader() {
-	if (m_Data) delete[] m_Data;
-	m_Data = NULL;
+	delete[] m_Data;
 }
 
 void WAD::Loader::setWADFilePath(std::string sFilePath) { m_sFilePath = sFilePath; }
@@ -39,11 +37,10 @@ bool WAD::Loader::openAndLoad() {
 
 	if (m_Data) {
 		delete[] m_Data;
-		m_Data = NULL;
 	}
 
 	m_Data = new uint8_t[length];
-	if (m_Data == NULL) {
+	if (m_Data == nullptr) {
 		std::cout << "Error: Failed alocate memory for WAD file of size " << length << std::endl;
 		return false;
 	}
@@ -86,17 +83,32 @@ bool WAD::Loader::loadMapData(Map *pMap) {
 	std::cout << "INFO: Parsing Map: " << pMap->getName() << std::endl;
 
 	std::cout << "INFO: Processing Map Vertex" << std::endl;
-	if (!readMapVertex(pMap)) {
+	if (!readMapVertexes(pMap)) {
 		std::cerr << "Error: Failed to read map vertex from MAP: " << pMap->getName() << std::endl;
 		return false;
 	}
+	std::cout << "INFO: Processing Map Sectors" << std::endl;
+	if (!readMapSectors(pMap)) {
+		std::cout << "Error: Failed to load map sectors data MAP: " << pMap->getName() << std::endl;
+		return false;
+	}
+	std::cout << "INFO: Processing Map Sidedefs" << std::endl;
+	if (!readMapSidedefs(pMap)) {
+		std::cout << "Error: Failed to load map Sidedefs data MAP: " << pMap->getName() << std::endl;
+		return false;
+	}
 	std::cout << "INFO: Processing Map Linedef" << std::endl;
-	if (!readMapLinedef(pMap)) {
+	if (!readMapLinedefs(pMap)) {
 		std::cerr << "Error: Failed to read map linedef from MAP: " << pMap->getName() << std::endl;
 		return false;
 	}
+	std::cout << "INFO: Processing Map Segs" << std::endl;
+	if (!readMapSegs(pMap)) {
+		std::cout << "Error: Failed to load map segs data MAP: " << pMap->getName() << std::endl;
+		return false;
+	}
 	std::cout << "INFO: Processing Map Things" << std::endl;
-	if (!readMapThing(pMap)) {
+	if (!readMapThings(pMap)) {
 		std::cerr << "Error: Failed to load map thing data MAP: " << pMap->getName() << std::endl;
 		return false;
 	}
@@ -105,15 +117,9 @@ bool WAD::Loader::loadMapData(Map *pMap) {
 		std::cerr << "Error: Failed to load map node data MAP: " << pMap->getName() << std::endl;
 		return false;
 	}
-	std::cout << "Info: Processing Map Subsectors" << std::endl;
+	std::cout << "INFO: Processing Map Subsectors" << std::endl;
 	if (!readMapSubsectors(pMap)) {
 		std::cerr << "Error: Failed to load map subsectors data MAP: " << pMap->getName() << std::endl;
-		return false;
-	}
-
-	std::cout << "Info: Processing Map Segs" << std::endl;
-	if (!readMapSegs(pMap)) {
-		std::cerr << "Error: Failed to load map segs data MAP: " << pMap->getName() << std::endl;
 		return false;
 	}
 
@@ -135,7 +141,7 @@ int WAD::Loader::findMapIndex(Map *pMap) {
 	return -1;
 }
 
-bool WAD::Loader::readMapVertex(Map *pMap) {
+bool WAD::Loader::readMapVertexes(Map *pMap) {
 	int iMapIndex = findMapIndex(pMap);
 
 	if (iMapIndex == -1) {
@@ -164,42 +170,57 @@ bool WAD::Loader::readMapVertex(Map *pMap) {
 	return true;
 }
 
-bool WAD::Loader::readMapLinedef(Map *pMap) {
+bool WAD::Loader::readMapSectors(Map *pMap) {
 	int iMapIndex = findMapIndex(pMap);
+
 	if (iMapIndex == -1) {
 		return false;
 	}
 
-	iMapIndex += EMAPLUMPSINDEX::eLINEDEFS;
+	iMapIndex += EMAPLUMPSINDEX::eSECTORS;
 
-	if (std::strcmp(m_Directories[iMapIndex].LumpName, "LINEDEFS") != 0) {
+	if (std::strcmp(m_Directories[iMapIndex].LumpName, "SECTORS") != 0) {
 		return false;
 	}
 
-	int iLinedefSizeInBytes = sizeof(Linedef);
-	int iLinedefCount = m_Directories[iMapIndex].LumpSize / iLinedefSizeInBytes;
+	int iSectorSizeInBytes = sizeof(WADSector);
+	int iSectorsCount = m_Directories[iMapIndex].LumpSize / iSectorSizeInBytes;
 
-	Linedef linedef;
-	for (int i = 0; i < iLinedefCount; ++i) {
-		m_Reader.readLinedefData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iLinedefSizeInBytes, linedef);
-
-		pMap->addLinedef(linedef);
-
-		// std::cout << linedef.StartVertex << std::endl;
-		// std::cout << linedef.EndVertex << std::endl;
-		// std::cout << linedef.Flags << std::endl;
-		// std::cout << linedef.LineType << std::endl;
-		// std::cout << linedef.SectorTag << std::endl;
-		// std::cout << linedef.RightSidedef << std::endl;
-		// std::cout << linedef.LeftSidedef << std::endl;
-
-		// std::cout << std::endl;
+	WADSector sector;
+	for (int i = 0; i < iSectorsCount; ++i) {
+		m_Reader.readSectorData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iSectorSizeInBytes, sector);
+		pMap->addSector(sector);
 	}
 
 	return true;
 }
 
-bool WAD::Loader::readMapThing(Map *pMap) {
+bool WAD::Loader::readMapSidedefs(Map *pMap) {
+	int iMapIndex = findMapIndex(pMap);
+
+	if (iMapIndex == -1) {
+		return false;
+	}
+
+	iMapIndex += EMAPLUMPSINDEX::eSIDEDDEFS;
+
+	if (std::strcmp(m_Directories[iMapIndex].LumpName, "SIDEDEFS") != 0) {
+		return false;
+	}
+
+	int iSidedefSizeInBytes = sizeof(WADSidedef);
+	int iSidedefsCount = m_Directories[iMapIndex].LumpSize / iSidedefSizeInBytes;
+
+	WADSidedef sidedef;
+	for (int i = 0; i < iSidedefsCount; ++i) {
+		m_Reader.readSidedefData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iSidedefSizeInBytes, sidedef);
+		pMap->addSidedef(sidedef);
+	}
+
+	return true;
+}
+
+bool WAD::Loader::readMapThings(Map *pMap) {
 	int iMapIndex = findMapIndex(pMap);
 	if (iMapIndex == -1) {
 		return false;
@@ -217,7 +238,7 @@ bool WAD::Loader::readMapThing(Map *pMap) {
 	Thing thing;
 	for (int i = 0; i < iThingsCount; ++i) {
 		m_Reader.readThingData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iThingsSizeInBytes, thing);
-		pMap->addThing(thing);
+		(pMap->getThings())->addThing(thing);
 
 		// std::cout << thing.XPosition << std::endl;
 		// std::cout << thing.YPosition << std::endl;
@@ -226,6 +247,41 @@ bool WAD::Loader::readMapThing(Map *pMap) {
 		// std::cout << thing.Flags << std::endl;
 		// std::cout << std::endl;
 	}
+	return true;
+}
+
+bool WAD::Loader::readMapLinedefs(Map *pMap) {
+	int iMapIndex = findMapIndex(pMap);
+	if (iMapIndex == -1) {
+		return false;
+	}
+
+	iMapIndex += EMAPLUMPSINDEX::eLINEDEFS;
+
+	if (std::strcmp(m_Directories[iMapIndex].LumpName, "LINEDEFS") != 0) {
+		return false;
+	}
+
+	int iLinedefSizeInBytes = sizeof(WADLinedef);
+	int iLinedefCount = m_Directories[iMapIndex].LumpSize / iLinedefSizeInBytes;
+
+	WADLinedef linedef;
+	for (int i = 0; i < iLinedefCount; ++i) {
+		m_Reader.readLinedefData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iLinedefSizeInBytes, linedef);
+
+		pMap->addLinedef(linedef);
+
+		// std::cout << linedef.StartVertex << std::endl;
+		// std::cout << linedef.EndVertex << std::endl;
+		// std::cout << linedef.Flags << std::endl;
+		// std::cout << linedef.LineType << std::endl;
+		// std::cout << linedef.SectorTag << std::endl;
+		// std::cout << linedef.RightSidedef << std::endl;
+		// std::cout << linedef.LeftSidedef << std::endl;
+
+		// std::cout << std::endl;
+	}
+
 	return true;
 }
 
@@ -247,7 +303,7 @@ bool WAD::Loader::readMapNodes(Map *pMap) {
 
 	Node node;
 	for (int i = 0; i < iNodesCount; ++i) {
-		m_Reader.readNodesData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iNodesSizeInBytes, node);
+		m_Reader.readNodeData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iNodesSizeInBytes, node);
 
 		pMap->addNode(node);
 	}
@@ -294,10 +350,10 @@ bool WAD::Loader::readMapSegs(Map *pMap) {
 		return false;
 	}
 
-	int iSegsSizeInBytes = sizeof(Seg);
+	int iSegsSizeInBytes = sizeof(WADSeg);
 	int iSegsCount = m_Directories[iMapIndex].LumpSize / iSegsSizeInBytes;
 
-	Seg seg;
+	WADSeg seg;
 	for (int i = 0; i < iSegsCount; ++i) {
 		m_Reader.readSegData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iSegsSizeInBytes, seg);
 
