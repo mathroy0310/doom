@@ -1,7 +1,9 @@
 #pragma once
 
 #include <SDL.h>
+#include <memory>
 
+#include "DisplayManager.h"
 #include <Engine/Doom.h>
 
 namespace Engine {
@@ -19,11 +21,6 @@ class Game {
 	bool init();
 
   protected:
-	int m_iWindowWidth;
-	int m_iWindowHeight;
-
-	SDL_Window   *m_pWindow;
-	SDL_Renderer *m_pRenderer;
-	Engine::Doom *m_pDoomEngine;
+	std::unique_ptr<Engine::Doom> m_pDoomEngine;
 };
 } // namespace Engine

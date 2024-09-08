@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdlib.h>
 
-Map::Map(ViewRenderer *pViewRenderer, std::string sName, Player *pPlayer, Things *pThings)
+Map::Map(ViewRenderer *pViewRenderer, const std::string sName, Player *pPlayer, Things *pThings)
     : m_sName(sName), m_XMin(INT_MAX), m_XMax(INT_MIN), m_YMin(INT_MAX), m_YMax(INT_MIN), m_iLumpIndex(-1), m_pPlayer(pPlayer), m_pThings(pThings), m_pViewRenderer(pViewRenderer) {
 	m_pSectors = new std::vector<WADSector>();
 	m_pSidedefs = new std::vector<WADSidedef>();
@@ -176,17 +176,6 @@ void Map::addSeg(WADSeg &seg) { m_pSegs->push_back(seg); }
 
 std::string Map::getName() const { return m_sName; }
 
-void Map::renderAutoMap() {
-	m_pViewRenderer->setDrawColor(255, 255, 255);
-
-	for (Linedef &l : m_Linedefs) {
-		Vertex vStart = *(l.pStartVertex);
-		Vertex vEnd = *(l.pEndVertex);
-
-		m_pViewRenderer->drawLine(vStart.XPosition, vStart.YPosition, vEnd.XPosition, vEnd.YPosition);
-	}
-}
-
 void Map::render3DView() { renderBSPNodes(); }
 
 void Map::renderBSPNodes() { renderBSPNodes(m_Nodes.size() - 1); }
@@ -227,19 +216,6 @@ bool Map::isPointOnLeftSide(int XPosition, int YPosition, int iNodeID) {
 	int dy = YPosition - m_Nodes[iNodeID].YPartition;
 
 	return (((dx * m_Nodes[iNodeID].ChangeYPartition) - (dy * m_Nodes[iNodeID].ChangeXPartition)) <= 0);
-}
-
-void Map::renderAutoMapNode(int iNodeID) {
-	Node &node = m_Nodes[iNodeID];
-
-	m_pViewRenderer->setDrawColor(0, 255, 0);
-	m_pViewRenderer->drawRect(node.RightBoxLeft, node.RightBoxTop, node.RightBoxRight, node.RightBoxBottom);
-
-	m_pViewRenderer->setDrawColor(255, 0, 0);
-	m_pViewRenderer->drawRect(node.LeftBoxLeft, node.LeftBoxTop, node.LeftBoxRight, node.LeftBoxLeft);
-
-	m_pViewRenderer->setDrawColor(0, 0, 255);
-	m_pViewRenderer->drawLine(node.XPartition, node.YPartition, node.XPartition + node.ChangeXPartition, node.YPartition + node.ChangeYPartition);
 }
 
 void Map::setLumpIndex(int iIndex) { m_iLumpIndex = iIndex; }

@@ -108,12 +108,6 @@ void Player::fly() { m_ZPosition += 2; }
 
 void Player::sink() { m_ZPosition -= 2; }
 
-void Player::renderAutoMap() {
-	m_pViewRenderer->setDrawColor(255, 0, 0);
-
-	m_pViewRenderer->drawLine(m_XPosition, m_YPosition, m_XPosition + 5, m_YPosition + 5);
-}
-
 float Player::distanceToPoint(Vertex &V) {
 	// We have two points, where the player is and the vertex passed.
 	// To calculate the distance just use "The Distance Formula"

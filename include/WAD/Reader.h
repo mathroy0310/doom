@@ -2,6 +2,9 @@
 
 #include <cstdint>
 
+#include <iostream>
+#include <string>
+
 #include "DataTypes.h"
 
 namespace WAD {
@@ -20,6 +23,7 @@ class Reader {
 	void readNodeData(const uint8_t *pWADData, int offset, Node &node);
 	void readSubsectorData(const uint8_t *pWADData, int offset, Subsector &subsector);
 	void readSegData(const uint8_t *pWADData, int offset, WADSeg &seg);
+	void readPalette(const uint8_t *pWADData, int offset, WADPalette &palette);
 
   protected:
 	uint16_t read2Bytes(const uint8_t *pWADData, int offset) const;

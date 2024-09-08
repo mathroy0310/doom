@@ -23,7 +23,6 @@ class Player {
 	void fly();
 	void sink();
 	void think(int iSubSectorHeight);
-	void renderAutoMap();
 
 	int   getID() const;
 	int   getXPosition() const;

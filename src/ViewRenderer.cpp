@@ -7,8 +7,7 @@
 #include "Map.h"
 #include "Player.h"
 
-ViewRenderer::ViewRenderer(SDL_Renderer *pRenderer)
-    : m_pRenderer(pRenderer), m_iAutoMapScaleFactor(15), m_UseClassicDoomScreenToAngle(true) {}
+ViewRenderer::ViewRenderer() : m_UseClassicDoomScreenToAngle(false) {}
 
 ViewRenderer::~ViewRenderer() {}
 
@@ -16,14 +15,15 @@ void ViewRenderer::init(Map *pMap, Player *pPlayer) {
 	m_pMap = pMap;
 	m_pPlayer = pPlayer;
 
-	SDL_RenderGetLogicalSize(m_pRenderer, &m_iRenderXSize, &m_iRenderYSize);
+	m_iRenderXSize = 320 * 2;
+	m_iRenderYSize = 200 * 2;
 
 	m_HalfScreenWidth = m_iRenderXSize / 2;
 	m_HalfScreenHeight = m_iRenderYSize / 2;
 	Angle HalfFOV = m_pPlayer->getFOV() / 2;
 	m_iDistancePlayerToScreen = m_HalfScreenWidth / HalfFOV.getTanValue();
 
-	for (size_t i = 0; i <= m_iRenderXSize; ++i) {
+	for (int i = 0; i <= m_iRenderXSize; ++i) {
 		if (m_UseClassicDoomScreenToAngle) {
 			m_ScreenXToAngle[i] = classicDoomScreenXtoView[i];
 		} else {
@@ -35,27 +35,15 @@ void ViewRenderer::init(Map *pMap, Player *pPlayer) {
 	m_FloorClipHeight.resize(m_iRenderXSize);
 }
 
-int ViewRenderer::remapXToScreen(int XMapPosition) {
-	return (XMapPosition + (-m_pMap->getXMin())) / m_iAutoMapScaleFactor;
-}
+void ViewRenderer::render(uint8_t *pScreenBuffer, int iBufferPitch) {
+	m_pScreenBuffer = pScreenBuffer;
+	m_iBufferPitch = iBufferPitch;
 
-int ViewRenderer::remapYToScreen(int YMapPosition) {
-	return m_iRenderYSize - (YMapPosition + (-m_pMap->getYMin())) / m_iAutoMapScaleFactor;
-}
-
-void ViewRenderer::render(bool isRenderAutoMap) {
-	if (isRenderAutoMap) {
-		renderAutoMap();
-	} else {
-		render3DView();
-	}
-	SDL_RenderPresent(m_pRenderer);
+	initFrame();
+	render3DView();
 }
 
 void ViewRenderer::initFrame() {
-	setDrawColor(0, 0, 0);
-	SDL_RenderClear(m_pRenderer);
-
 	m_SolidWallRanges.clear();
 
 	SolidSegmentRange WallLeftSide;
@@ -319,39 +307,6 @@ float ViewRenderer::getScaleFactor(int VXScreen, Angle SegToNormalAngle, float D
 	return ScaleFactor;
 }
 
-void ViewRenderer::calculateWallHeightSimple(Seg &seg, int V1XScreen, int V2XScreen, Angle V1Angle, Angle V2Angle) {
-	// We have V1 and V2, do calculations for V1 and V2 sepratly then interpolate values in between
-	float DistanceToV1 = m_pPlayer->distanceToPoint(*seg.pStartVertex);
-	float DistanceToV2 = m_pPlayer->distanceToPoint(*seg.pEndVertex);
-
-	// Special Case partial seg on the left
-	if (V1XScreen <= 0) {
-		partialSeg(seg, V1Angle, V2Angle, DistanceToV1, true);
-	}
-
-	// Special Case partial seg on the right
-	if (V2XScreen >= 319) {
-		partialSeg(seg, V1Angle, V2Angle, DistanceToV2, false);
-	}
-
-	float CeilingV1OnScreen;
-	float FloorV1OnScreen;
-	float CeilingV2OnScreen;
-	float FloorV2OnScreen;
-
-	calculateCeilingFloorHeight(seg, V1XScreen, DistanceToV1, CeilingV1OnScreen, FloorV1OnScreen);
-	calculateCeilingFloorHeight(seg, V2XScreen, DistanceToV2, CeilingV2OnScreen, FloorV2OnScreen);
-
-	// SDL_Color color = {255, 255, 255};
-	SDL_Color color = getWallColor(seg.pLinedef->pRightSidedef->MiddleTexture);
-	setDrawColor(color.r, color.g, color.b);
-
-	SDL_RenderDrawLine(m_pRenderer, V1XScreen, CeilingV1OnScreen, V1XScreen, FloorV1OnScreen);
-	SDL_RenderDrawLine(m_pRenderer, V2XScreen, CeilingV2OnScreen, V2XScreen, FloorV2OnScreen);
-	SDL_RenderDrawLine(m_pRenderer, V1XScreen, CeilingV1OnScreen, V2XScreen, CeilingV2OnScreen);
-	SDL_RenderDrawLine(m_pRenderer, V1XScreen, FloorV1OnScreen, V2XScreen, FloorV2OnScreen);
-}
-
 void ViewRenderer::calculateCeilingFloorHeight(Seg &seg, int &VXScreen, float &DistanceToV, float &CeilingVOnScreen, float &FloorVOnScreen) {
 	float Ceiling = seg.pRightSector->CeilingHeight - m_pPlayer->getZPosition();
 	float Floor = seg.pRightSector->FloorHeight - m_pPlayer->getZPosition();
@@ -396,10 +351,7 @@ void ViewRenderer::partialSeg(Seg &seg, Angle &V1Angle, Angle &V2Angle, float &D
 }
 
 void ViewRenderer::renderSegment(SegmentRenderData &RenderData) {
-	SDL_Color color;
-	int       iXCurrent = RenderData.V1XScreen;
-
-	selectColor(*(RenderData.pSeg), color);
+	int iXCurrent = RenderData.V1XScreen;
 
 	while (iXCurrent <= RenderData.V2XScreen) {
 		int CurrentCeilingEnd = RenderData.CeilingEnd;
@@ -422,18 +374,9 @@ void ViewRenderer::renderSegment(SegmentRenderData &RenderData) {
 	}
 }
 
-void ViewRenderer::selectColor(Seg &seg, SDL_Color &color) {
-	if (seg.pLeftSector) {
-		color = getWallColor(seg.pLinedef->pRightSidedef->UpperTexture);
-		setDrawColor(color.r, color.g, color.b);
-	} else {
-		color = getWallColor(seg.pLinedef->pRightSidedef->MiddleTexture);
-		setDrawColor(color.r, color.g, color.b);
-	}
-}
-
 void ViewRenderer::drawMiddleSection(ViewRenderer::SegmentRenderData &RenderData, int iXCurrent, int CurrentCeilingEnd, int CurrentFloorStart) {
-	SDL_RenderDrawLine(m_pRenderer, iXCurrent, CurrentCeilingEnd, iXCurrent, CurrentFloorStart);
+	uint8_t color = getSectionColor(RenderData.pSeg->pLinedef->pRightSidedef->MiddleTexture);
+	drawVerticalLine(iXCurrent, CurrentCeilingEnd, CurrentFloorStart, color);
 	m_CeilingClipHeight[iXCurrent] = m_iRenderYSize;
 	m_FloorClipHeight[iXCurrent] = -1;
 }
@@ -448,7 +391,8 @@ void ViewRenderer::drawLowerSection(ViewRenderer::SegmentRenderData &RenderData,
 		}
 
 		if (iLowerHeight <= CurrentFloorStart) {
-			SDL_RenderDrawLine(m_pRenderer, iXCurrent, iLowerHeight, iXCurrent, CurrentFloorStart);
+			uint8_t color = getSectionColor(RenderData.pSeg->pLinedef->pRightSidedef->LowerTexture);
+			drawVerticalLine(iXCurrent, iLowerHeight, CurrentFloorStart, color);
 			m_FloorClipHeight[iXCurrent] = iLowerHeight;
 		} else
 			m_FloorClipHeight[iXCurrent] = CurrentFloorStart + 1;
@@ -467,7 +411,8 @@ void ViewRenderer::drawUpperSection(ViewRenderer::SegmentRenderData &RenderData,
 		}
 
 		if (iUpperHeight >= CurrentCeilingEnd) {
-			SDL_RenderDrawLine(m_pRenderer, iXCurrent, CurrentCeilingEnd, iXCurrent, iUpperHeight);
+			uint8_t color = getSectionColor(RenderData.pSeg->pLinedef->pRightSidedef->UpperTexture);
+			drawVerticalLine(iXCurrent, CurrentCeilingEnd, iUpperHeight, color);
 			m_CeilingClipHeight[iXCurrent] = iUpperHeight;
 		} else {
 			m_CeilingClipHeight[iXCurrent] = CurrentCeilingEnd - 1;
@@ -494,21 +439,6 @@ bool ViewRenderer::validateRange(ViewRenderer::SegmentRenderData &RenderData, in
 	}
 	return true;
 }
-void ViewRenderer::renderSolidWall(Seg &seg, int XStart, int XStop) {
-	int iXCurrent = XStart;
-
-	SDL_Color color = getWallColor(seg.pLinedef->pRightSidedef->MiddleTexture);
-	setDrawColor(color.r, color.g, color.b);
-	while (iXCurrent <= XStop) {
-		SDL_RenderDrawLine(m_pRenderer, iXCurrent, 10, iXCurrent, 20);
-		++iXCurrent;
-	}
-}
-
-void ViewRenderer::renderAutoMap() {
-	m_pMap->renderAutoMap();
-	m_pPlayer->renderAutoMap();
-}
 
 void ViewRenderer::render3DView() { m_pMap->render3DView(); }
 
@@ -527,28 +457,21 @@ int ViewRenderer::angleToScreen(Angle angle) {
 	return iX;
 }
 
-void ViewRenderer::setDrawColor(Uint8 r, Uint8 g, Uint8 b) {
-	SDL_SetRenderDrawColor(m_pRenderer, r, g, b, SDL_ALPHA_OPAQUE);
-}
-
-void ViewRenderer::drawRect(int X1, int Y1, int X2, int Y2) {
-	SDL_Rect Rect = {remapXToScreen(X1), remapYToScreen(Y1), remapXToScreen(X2) - remapXToScreen(X1) + 1, remapYToScreen(Y2) - remapYToScreen(Y1) + 1};
-
-	SDL_RenderDrawRect(m_pRenderer, &Rect);
-}
-
-void ViewRenderer::drawLine(int X1, int Y1, int X2, int Y2) {
-	int val1 = remapXToScreen(X1);
-	int val2 = remapYToScreen(Y1);
-	SDL_RenderDrawLine(m_pRenderer, remapXToScreen(X1), remapYToScreen(Y1), remapXToScreen(X2), remapYToScreen(Y2));
-}
-
-SDL_Color ViewRenderer::getWallColor(const std::string textureName) {
-	if (m_WallColor.count(textureName)) {
-		return m_WallColor[textureName];
+uint8_t ViewRenderer::getSectionColor(const std::string &TextureName) {
+	uint8_t color;
+	if (m_WallColor.count(TextureName)) {
+		color = m_WallColor[TextureName];
 	} else {
-		SDL_Color color{static_cast<Uint8>(rand() % 255), static_cast<Uint8>(rand() % 255), static_cast<Uint8>(rand() % 255)};
-		m_WallColor[textureName] = color;
-		return color;
+		color = rand() % 256;
+		m_WallColor[TextureName] = color;
+	};
+
+	return color;
+}
+
+void ViewRenderer::drawVerticalLine(int iX, int iStartY, int iEndY, uint8_t color) {
+	while (iStartY < iEndY) {
+		m_pScreenBuffer[m_iBufferPitch * iStartY + iX] = color;
+		++iStartY;
 	}
 }

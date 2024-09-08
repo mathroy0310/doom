@@ -3,15 +3,13 @@
 
 namespace WAD {
 
-WAD::Loader::Loader() : m_Data(nullptr) {}
+WAD::Loader::Loader() : m_pData(nullptr) {}
 
-WAD::Loader::~Loader() {
-	delete[] m_Data;
-}
+WAD::Loader::~Loader() { delete[] m_pData; }
 
-void WAD::Loader::setWADFilePath(std::string sFilePath) { m_sFilePath = sFilePath; }
+void WAD::Loader::setFilePath(std::string sFilePath) { m_sFilePath = sFilePath; }
 
-bool WAD::Loader::loadWAD() {
+bool WAD::Loader::loadToMemory() {
 	if (!openAndLoad()) {
 		return false;
 	}
@@ -35,18 +33,18 @@ bool WAD::Loader::openAndLoad() {
 	m_File.seekg(0, m_File.end);
 	size_t length = m_File.tellg();
 
-	if (m_Data) {
-		delete[] m_Data;
+	if (m_pData) {
+		delete[] m_pData;
 	}
 
-	m_Data = new uint8_t[length];
-	if (m_Data == nullptr) {
+	m_pData = new uint8_t[length];
+	if (m_pData == nullptr) {
 		std::cout << "Error: Failed alocate memory for WAD file of size " << length << std::endl;
 		return false;
 	}
 
 	m_File.seekg(std::ifstream::beg);
-	m_File.read((char *) m_Data, length);
+	m_File.read((char *) m_pData, length);
 
 	m_File.close();
 
@@ -56,7 +54,7 @@ bool WAD::Loader::openAndLoad() {
 
 bool WAD::Loader::readDirectories() {
 	Header header;
-	m_Reader.readHeaderData(m_Data, 0, header);
+	m_Reader.readHeaderData(m_pData, 0, header);
 
 	// std::cout << header.WADType << std::endl;
 	// std::cout << header.DirectoryCount << std::endl;
@@ -66,7 +64,7 @@ bool WAD::Loader::readDirectories() {
 	Directory directory;
 
 	for (unsigned int i = 0; i < header.DirectoryCount; ++i) {
-		m_Reader.readDirectoryData(m_Data, header.DirectoryOffset + i * 16, directory);
+		m_Reader.readDirectoryData(m_pData, header.DirectoryOffset + i * 16, directory);
 
 		m_Directories.push_back(directory);
 
@@ -141,6 +139,15 @@ int WAD::Loader::findMapIndex(Map *pMap) {
 	return -1;
 }
 
+int WAD::Loader::findLumpByName(const std::string &LumpName) {
+	for (int i = 0; i < m_Directories.size(); ++i) {
+		if (m_Directories[i].LumpName == LumpName) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 bool WAD::Loader::readMapVertexes(Map *pMap) {
 	int iMapIndex = findMapIndex(pMap);
 
@@ -159,7 +166,7 @@ bool WAD::Loader::readMapVertexes(Map *pMap) {
 
 	Vertex vertex;
 	for (int i = 0; i < iVertexCount; ++i) {
-		m_Reader.readVertexData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iVertexSizeInBytes, vertex);
+		m_Reader.readVertexData(m_pData, m_Directories[iMapIndex].LumpOffset + i * iVertexSizeInBytes, vertex);
 
 		pMap->addVertex(vertex);
 
@@ -188,7 +195,7 @@ bool WAD::Loader::readMapSectors(Map *pMap) {
 
 	WADSector sector;
 	for (int i = 0; i < iSectorsCount; ++i) {
-		m_Reader.readSectorData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iSectorSizeInBytes, sector);
+		m_Reader.readSectorData(m_pData, m_Directories[iMapIndex].LumpOffset + i * iSectorSizeInBytes, sector);
 		pMap->addSector(sector);
 	}
 
@@ -213,7 +220,7 @@ bool WAD::Loader::readMapSidedefs(Map *pMap) {
 
 	WADSidedef sidedef;
 	for (int i = 0; i < iSidedefsCount; ++i) {
-		m_Reader.readSidedefData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iSidedefSizeInBytes, sidedef);
+		m_Reader.readSidedefData(m_pData, m_Directories[iMapIndex].LumpOffset + i * iSidedefSizeInBytes, sidedef);
 		pMap->addSidedef(sidedef);
 	}
 
@@ -237,7 +244,7 @@ bool WAD::Loader::readMapThings(Map *pMap) {
 
 	Thing thing;
 	for (int i = 0; i < iThingsCount; ++i) {
-		m_Reader.readThingData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iThingsSizeInBytes, thing);
+		m_Reader.readThingData(m_pData, m_Directories[iMapIndex].LumpOffset + i * iThingsSizeInBytes, thing);
 		(pMap->getThings())->addThing(thing);
 
 		// std::cout << thing.XPosition << std::endl;
@@ -267,7 +274,7 @@ bool WAD::Loader::readMapLinedefs(Map *pMap) {
 
 	WADLinedef linedef;
 	for (int i = 0; i < iLinedefCount; ++i) {
-		m_Reader.readLinedefData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iLinedefSizeInBytes, linedef);
+		m_Reader.readLinedefData(m_pData, m_Directories[iMapIndex].LumpOffset + i * iLinedefSizeInBytes, linedef);
 
 		pMap->addLinedef(linedef);
 
@@ -303,7 +310,7 @@ bool WAD::Loader::readMapNodes(Map *pMap) {
 
 	Node node;
 	for (int i = 0; i < iNodesCount; ++i) {
-		m_Reader.readNodeData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iNodesSizeInBytes, node);
+		m_Reader.readNodeData(m_pData, m_Directories[iMapIndex].LumpOffset + i * iNodesSizeInBytes, node);
 
 		pMap->addNode(node);
 	}
@@ -329,7 +336,7 @@ bool WAD::Loader::readMapSubsectors(Map *pMap) {
 
 	Subsector subsector;
 	for (int i = 0; i < iSubsectorsCount; ++i) {
-		m_Reader.readSubsectorData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iSubsectorsSizeInBytes, subsector);
+		m_Reader.readSubsectorData(m_pData, m_Directories[iMapIndex].LumpOffset + i * iSubsectorsSizeInBytes, subsector);
 
 		pMap->addSubsector(subsector);
 	}
@@ -355,9 +362,26 @@ bool WAD::Loader::readMapSegs(Map *pMap) {
 
 	WADSeg seg;
 	for (int i = 0; i < iSegsCount; ++i) {
-		m_Reader.readSegData(m_Data, m_Directories[iMapIndex].LumpOffset + i * iSegsSizeInBytes, seg);
+		m_Reader.readSegData(m_pData, m_Directories[iMapIndex].LumpOffset + i * iSegsSizeInBytes, seg);
 
 		pMap->addSeg(seg);
+	}
+
+	return true;
+}
+
+bool WAD::Loader::loadPalette(DisplayManager *pDisplayManager) {
+	std::cout << "Info: Loading PLAYPAL (Color Palettes)" << std::endl;
+	int iPlaypalIndex = findLumpByName("PLAYPAL");
+
+	if (std::strcmp(m_Directories[iPlaypalIndex].LumpName, "PLAYPAL") != 0) {
+		return false;
+	}
+
+	WADPalette palette;
+	for (int i = 0; i < 14; ++i) {
+		m_Reader.readPalette(m_pData, m_Directories[iPlaypalIndex].LumpOffset + (i * 3 * 256), palette);
+		pDisplayManager->addColorPalette(palette);
 	}
 
 	return true;

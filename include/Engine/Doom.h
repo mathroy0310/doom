@@ -1,8 +1,10 @@
 #pragma once
 
 #include <SDL.h>
+#include <memory>
 #include <string>
 
+#include "DisplayManager.h"
 #include "Map.h"
 #include "Player.h"
 #include "ViewRenderer.h"
@@ -11,7 +13,7 @@
 namespace Engine {
 class Doom {
   public:
-	Doom(SDL_Renderer *pRenderer);
+	Doom();
 	~Doom();
 
 	virtual void render();
@@ -24,11 +26,13 @@ class Doom {
 	virtual bool isOver();
 	virtual bool init();
 
+	void loadWAD();
+
 	virtual int getRenderWidth() const;
 	virtual int getRenderHeight() const;
 	virtual int getTimePerFrame() const;
 
-	virtual std::string getName() const;
+	virtual std::string getAppName() const;
 	virtual std::string getWADFileName() const;
 
   protected:
@@ -36,14 +40,16 @@ class Doom {
 	int m_iRenderHeight;
 
 	bool m_bIsOver;
-	bool m_bRenderAutoMap;
 
-	SDL_Renderer *m_pRenderer;
-	WAD::Loader   m_WADLoader;
-	Map          *m_pMap;
-	Player       *m_pPlayer;
-	Things       *m_pThings;
-	ViewRenderer *m_pViewRenderer;
+	std::string m_sAppName;
+
+	WAD::Loader m_WADLoader;
+
+	std::unique_ptr<Map>            m_pMap;
+	std::unique_ptr<Player>         m_pPlayer;
+	std::unique_ptr<Things>         m_pThings;
+	std::unique_ptr<DisplayManager> m_pDisplayManager;
+	std::unique_ptr<ViewRenderer>   m_pViewRenderer;
 };
 
 } // namespace Engine

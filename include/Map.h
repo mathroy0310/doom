@@ -10,7 +10,7 @@
 
 class Map {
   public:
-	Map(ViewRenderer *pViewRenderer, std::string sName, Player *pPlayer, Things *pThings);
+	Map(ViewRenderer *pViewRenderer, const std::string sName, Player *pPlayer, Things *pThings);
 	~Map();
 
 	std::string getName() const;
@@ -21,7 +21,6 @@ class Map {
 	void        addSeg(WADSeg &seg);
 	void        addSidedef(WADSidedef &sidedef);
 	void        addSector(WADSector &sector);
-	void        renderAutoMap();
 	void        render3DView();
 	void        setLumpIndex(int iIndex);
 	void        init();

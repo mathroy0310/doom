@@ -173,4 +173,14 @@ void WAD::Reader::readSegData(const uint8_t *pWADData, int offset, WADSeg &seg) 
 	seg.Offset = read2Bytes(pWADData, offset + 10);
 }
 
+void WAD::Reader::readPalette(const uint8_t *pWADData, int offset, WADPalette &palette) {
+	for (int i = 0; i < 256; ++i) {
+		palette.Colors[i].r = pWADData[offset++];
+		palette.Colors[i].g = pWADData[offset++];
+		palette.Colors[i].b = pWADData[offset++];
+		palette.Colors[i].a = 255;
+		//std::cout << "Color "<< i << ": " << (int) palette.Colors[i].r << " " << (int) palette.Colors[i].g << " " << (int) palette.Colors[i].b << std::endl;
+	}
+}
+
 } // namespace WAD

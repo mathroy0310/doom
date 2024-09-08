@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "DataTypes.h"
+#include "DisplayManager.h"
 #include "Map.h"
 #include "WAD/Reader.h"
 
@@ -16,10 +17,11 @@ class Loader {
 	Loader();
 	~Loader();
 
-	void setWADFilePath(std::string sFilePath);
+	void setFilePath(std::string sFilePath);
 
-	bool loadWAD();
+	bool loadToMemory();
 	bool loadMapData(Map *pMap);
+	bool loadPalette(DisplayManager *pDisplayManager);
 
   protected:
 	bool openAndLoad();
@@ -34,11 +36,12 @@ class Loader {
 	bool readMapSegs(Map *pMap);
 
 	int findMapIndex(Map *pMap);
+	int findLumpByName(const std::string &LumpName);
 
   private:
 	std::string            m_sFilePath;
 	std::ifstream          m_File;
-	uint8_t               *m_Data;
+	uint8_t               *m_pData;
 	std::vector<Directory> m_Directories;
 	WAD::Reader            m_Reader;
 };

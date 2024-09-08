@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Angle.h"
+#include <SDL.h>
 #include <cstdint>
 
 // 16th bit identifier
@@ -137,6 +138,11 @@ struct Seg {
 	Sector  *pLeftSector;
 };
 
+struct Subsector {
+	uint16_t SegCount;
+	uint16_t FirstSegID;
+};
+
 struct Node {
 	int16_t XPartition;
 	int16_t YPartition;
@@ -157,7 +163,6 @@ struct Node {
 	uint16_t LeftChildID;
 };
 
-struct Subsector {
-	uint16_t SegCount;
-	uint16_t FirstSegID;
+struct WADPalette {
+	SDL_Color Colors[256];
 };
