@@ -2,7 +2,9 @@
 #include <math.h>
 
 Player::Player(ViewRenderer *pViewRenderer, int iID)
-    : m_pViewRenderer(pViewRenderer), m_iPlayerID(iID), m_FOV(90), m_iRotationSpeed(12), m_iMovementSpeed(16), m_ZPosition(41) {}
+    : m_pViewRenderer(pViewRenderer), m_iPlayerID(iID), m_FOV(90), m_iRotationSpeed(12), m_iMovementSpeed(16), m_EyeLevel(41) {
+	m_ZPosition = m_EyeLevel;
+}
 
 Player::~Player() {}
 
@@ -120,3 +122,5 @@ float Player::distanceToPoint(Vertex &V) {
 }
 
 int Player::getFOV() const { return m_FOV; }
+
+void Player::think(int iSubSectorHeight) { m_ZPosition = iSubSectorHeight + m_EyeLevel; }

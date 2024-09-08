@@ -106,7 +106,7 @@ void Engine::Doom::keyReleased(SDL_Event &event) {
 
 void Engine::Doom::quit() { m_bIsOver = true; }
 
-void Engine::Doom::update() {}
+void Engine::Doom::update() { m_pPlayer->think(m_pMap->getPlayerSubSectorHeight()); }
 
 bool Engine::Doom::isOver() { return m_bIsOver; }
 

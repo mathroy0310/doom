@@ -26,6 +26,7 @@ class Map {
 	void        setLumpIndex(int iIndex);
 	void        init();
 
+	int getPlayerSubSectorHeight();
 	int getXMin() const;
 	int getXMax() const;
 	int getYMin() const;

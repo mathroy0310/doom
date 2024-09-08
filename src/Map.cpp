@@ -213,7 +213,7 @@ void Map::renderBSPNodes(int iNodeID) {
 void Map::renderSubsector(int iSubsectorID) {
 	Subsector &subsector = m_Subsector[iSubsectorID];
 
-	for (int i = 0; i < subsector.SegCount; i++) {
+	for (size_t i = 0; i < subsector.SegCount; i++) {
 		Seg  &seg = m_Segs[subsector.FirstSegID + i];
 		Angle V1Angle, V2Angle, V1AngleFromPlayer, V2AngleFromPlayer;
 		if (m_pPlayer->clipVertexesInFOV(*(seg.pStartVertex), *(seg.pEndVertex), V1Angle, V2Angle, V1AngleFromPlayer, V2AngleFromPlayer)) {
@@ -247,3 +247,19 @@ void Map::setLumpIndex(int iIndex) { m_iLumpIndex = iIndex; }
 int Map::getLumpIndex() const { return m_iLumpIndex; }
 
 Things *Map::getThings() const { return m_pThings; }
+
+int Map::getPlayerSubSectorHeight() {
+	int iSubsectorID = m_Nodes.size() - 1;
+	while (!(iSubsectorID & SUBSECTORIDENTIFIER)) {
+		bool isOnLeft = isPointOnLeftSide(m_pPlayer->getXPosition(), m_pPlayer->getYPosition(), iSubsectorID);
+
+		if (isOnLeft) {
+			iSubsectorID = m_Nodes[iSubsectorID].LeftChildID;
+		} else {
+			iSubsectorID = m_Nodes[iSubsectorID].RightChildID;
+		}
+	}
+	Subsector &subsector = m_Subsector[iSubsectorID & (~SUBSECTORIDENTIFIER)];
+	Seg       &seg = m_Segs[subsector.FirstSegID];
+	return seg.pRightSector->FloorHeight;
+}
