@@ -20,7 +20,7 @@ class ViewRenderer {
 
 	void init(Map *pMap, Player *pPlayer);
 	void render(bool isRenderAutoMap);
-	void addWallInFOV(Seg &seg, Angle V1Angle, Angle V2Angle);
+	void addWallInFOV(Seg &seg, Angle V1Angle, Angle V2Angle, Angle V1AngleFromPlayer, Angle V2AngleFromPlayer);
 	void initFrame();
 	void setDrawColor(Uint8 r, Uint8 g, Uint8 b);
 	void drawRect(int x, int y, int w, int h);
@@ -32,18 +32,19 @@ class ViewRenderer {
 		int XEnd;
 	};
 
-	struct SolidSegmentData {
-		Seg &seg;
-		int  XStart;
-		int  XEnd;
-	};
-
 	void renderAutoMap();
 	void render3DView();
-	void drawSolidWall(SolidSegmentData &visableSeg);
 
-	void clipSolidWalls(Seg &seg, int V1XScreen, int V2XScreen);
-	void storeWallRange(Seg &seg, int V1XScreen, int V2XScreen);
+	void clipSolidWalls(Seg &seg, int V1XScreen, int V2XScreen, Angle V1Angle, Angle V2Angle);
+	void storeWallRange(Seg &seg, int V1XScreen, int V2XScreen, Angle V1Angle, Angle V2Angle);
+
+	void calculateWallHeight(Seg &seg, int V1XScreen, int V2XScreen, Angle V1Angle, Angle V2Angle);
+	void calculateWallHeightSimple(Seg &seg, int V1XScreen, int V2XScreen, Angle V1Angle, Angle V2Angle);
+	void calculateCeilingFloorHeight(Seg &seg, int &VXScreen, float &DistanceToV, float &CeilingVOnScreen, float &FloorVOnScreen);
+	void partialSeg(Seg &seg, Angle &V1Angle, Angle &V2Angle, float &DistanceToV1, bool IsLeftSide);
+	void renderSolidWall(Seg &seg, int XStart, int XStop);
+
+	float getScaleFactor(int VXScreen, Angle NormalAngle, float NormalDistance);
 
 	int angleToScreen(Angle angle);
 	int remapXToScreen(int XMapPosition);
@@ -55,6 +56,11 @@ class ViewRenderer {
 	int m_iRenderXSize;
 	int m_iRenderYSize;
 	int m_iAutoMapScaleFactor;
+	int m_iDistancePlayerToScreen;
+	int m_HalfScreenWidth;
+	int m_HalfScreenHeight;
+
+	bool m_UseClassicDoomScreenToAngle;
 
 	Map          *m_pMap;
 	Player       *m_pPlayer;
@@ -62,4 +68,5 @@ class ViewRenderer {
 
 	std::list<SolidSegmentRange>     m_SolidWallRanges;
 	std::map<std::string, SDL_Color> m_WallColor;
+	std::map<int, Angle>             m_ScreenXToAngle;
 };

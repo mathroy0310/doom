@@ -3,11 +3,12 @@
 #include <iostream>
 #include <math.h>
 
+#include "ClassicDefs.h"
 #include "Map.h"
 #include "Player.h"
 
 ViewRenderer::ViewRenderer(SDL_Renderer *pRenderer)
-    : m_pRenderer(pRenderer), m_iAutoMapScaleFactor(15) {}
+    : m_pRenderer(pRenderer), m_iAutoMapScaleFactor(15), m_UseClassicDoomScreenToAngle(false) {}
 
 ViewRenderer::~ViewRenderer() {}
 
@@ -16,6 +17,19 @@ void ViewRenderer::init(Map *pMap, Player *pPlayer) {
 	m_pPlayer = pPlayer;
 
 	SDL_RenderGetLogicalSize(m_pRenderer, &m_iRenderXSize, &m_iRenderYSize);
+
+	m_HalfScreenWidth = m_iRenderXSize / 2;
+	m_HalfScreenHeight = m_iRenderYSize / 2;
+	Angle HalfFOV = m_pPlayer->getFOV() / 2;
+	m_iDistancePlayerToScreen = m_HalfScreenWidth / HalfFOV.getTanValue();
+
+	for (int i = 0; i <= m_iRenderXSize; ++i) {
+		if (m_UseClassicDoomScreenToAngle) {
+			m_ScreenXToAngle[i] = classicDoomScreenXtoView[i];
+		} else {
+			m_ScreenXToAngle[i] = atan((m_HalfScreenWidth - i) / (float) m_iDistancePlayerToScreen) * 180 / M_PI;
+		}
+	}
 }
 
 int ViewRenderer::remapXToScreen(int XMapPosition) {
@@ -53,21 +67,24 @@ void ViewRenderer::initFrame() {
 	m_SolidWallRanges.push_back(WallRightSide);
 }
 
-void ViewRenderer::addWallInFOV(Seg &seg, Angle V1Angle, Angle V2Angle) {
+void ViewRenderer::addWallInFOV(Seg &seg, Angle V1Angle, Angle V2Angle, Angle V1AngleFromPlayer, Angle V2AngleFromPlayer) {
 	// Find Wall X Coordinates
-	int V1XScreen = angleToScreen(V1Angle);
-	int V2XScreen = angleToScreen(V2Angle);
+	int V1XScreen = angleToScreen(V1AngleFromPlayer);
+	int V2XScreen = angleToScreen(V2AngleFromPlayer);
 
 	// Skip same pixel wall
 	if (V1XScreen == V2XScreen) return;
 
 	// Handle solid walls
 	if (seg.pLeftSector == nullptr) {
-		clipSolidWalls(seg, V1XScreen, V2XScreen);
+		clipSolidWalls(seg, V1XScreen, V2XScreen, V1Angle, V2Angle);
 	}
 }
 
-void ViewRenderer::clipSolidWalls(Seg &seg, int V1XScreen, int V2XScreen) {
+void ViewRenderer::clipSolidWalls(Seg &seg, int V1XScreen, int V2XScreen, Angle V1Angle, Angle V2Angle) {
+	if (m_SolidWallRanges.size() < 2) {
+		return;
+	}
 	// Find clip window
 	SolidSegmentRange CurrentWall = {V1XScreen, V2XScreen};
 
@@ -79,13 +96,13 @@ void ViewRenderer::clipSolidWalls(Seg &seg, int V1XScreen, int V2XScreen) {
 	if (CurrentWall.XStart < FoundClipWall->XStart) {
 		if (CurrentWall.XEnd < FoundClipWall->XStart - 1) {
 			// All of the wall is visible, so insert it
-			storeWallRange(seg, CurrentWall.XStart, CurrentWall.XEnd);
+			storeWallRange(seg, CurrentWall.XStart, CurrentWall.XEnd, V1Angle, V2Angle);
 			m_SolidWallRanges.insert(FoundClipWall, CurrentWall);
 			return;
 		}
 
 		// The end is already included, just update start
-		storeWallRange(seg, CurrentWall.XStart, FoundClipWall->XStart - 1);
+		storeWallRange(seg, CurrentWall.XStart, FoundClipWall->XStart - 1, V1Angle, V2Angle);
 		FoundClipWall->XStart = CurrentWall.XStart;
 	}
 
@@ -96,7 +113,7 @@ void ViewRenderer::clipSolidWalls(Seg &seg, int V1XScreen, int V2XScreen) {
 
 	while (CurrentWall.XEnd >= next(NextWall, 1)->XStart - 1) {
 		// partialy clipped by other walls, store each fragment
-		storeWallRange(seg, NextWall->XEnd + 1, next(NextWall, 1)->XStart - 1);
+		storeWallRange(seg, NextWall->XEnd + 1, next(NextWall, 1)->XStart - 1, V1Angle, V2Angle);
 		++NextWall;
 
 		if (CurrentWall.XEnd <= NextWall->XEnd) {
@@ -106,12 +123,11 @@ void ViewRenderer::clipSolidWalls(Seg &seg, int V1XScreen, int V2XScreen) {
 				NextWall++;
 				m_SolidWallRanges.erase(FoundClipWall, NextWall);
 			}
-
 			return;
 		}
 	}
 
-	storeWallRange(seg, NextWall->XEnd + 1, CurrentWall.XEnd);
+	storeWallRange(seg, NextWall->XEnd + 1, CurrentWall.XEnd, V1Angle, V2Angle);
 	FoundClipWall->XEnd = CurrentWall.XEnd;
 
 	if (NextWall != FoundClipWall) {
@@ -121,10 +137,158 @@ void ViewRenderer::clipSolidWalls(Seg &seg, int V1XScreen, int V2XScreen) {
 	}
 }
 
-void ViewRenderer::storeWallRange(Seg &seg, int V1XScreen, int V2XScreen) {
-	// For now just we will not store the range, we will just draw it
-	SolidSegmentData Wall = {seg, V1XScreen, V2XScreen};
-	drawSolidWall(Wall);
+void ViewRenderer::storeWallRange(Seg &seg, int V1XScreen, int V2XScreen, Angle V1Angle, Angle V2Angle) {
+	calculateWallHeight(seg, V1XScreen, V2XScreen, V1Angle, V2Angle);
+	calculateWallHeightSimple(seg, V1XScreen, V2XScreen, V1Angle, V2Angle);
+}
+
+void ViewRenderer::calculateWallHeight(Seg &seg, int V1XScreen, int V2XScreen, Angle V1Angle, Angle V2Angle) {
+	// Calculate the distance to the first edge of the wall
+	Angle Angle90(90);
+	Angle SegToNormalAngle = seg.SlopeAngle + Angle90;
+	// Angle NomalToV1Angle = abs(SegToNormalAngle.GetSignedValue() - V1Angle.GetSignedValue());
+	Angle NomalToV1Angle = SegToNormalAngle.getValue() - V1Angle.getValue();
+
+	// Normal angle is 90 degree to wall
+	Angle SegToPlayerAngle = Angle90 - NomalToV1Angle;
+
+	float DistanceToV1 = m_pPlayer->distanceToPoint(*seg.pStartVertex);
+	float DistanceToNormal = SegToPlayerAngle.getSinValue() * DistanceToV1;
+
+	float V1ScaleFactor = getScaleFactor(V1XScreen, SegToNormalAngle, DistanceToNormal);
+	float V2ScaleFactor = getScaleFactor(V2XScreen, SegToNormalAngle, DistanceToNormal);
+
+	float Steps = (V2ScaleFactor - V1ScaleFactor) / (V2XScreen - V1XScreen);
+
+	float Ceiling = seg.pRightSector->CeilingHeight - m_pPlayer->getZPosition();
+	float Floor = seg.pRightSector->FloorHeight - m_pPlayer->getZPosition();
+
+	float CeilingStep = -(Ceiling * Steps);
+	float CeilingEnd = m_HalfScreenHeight - (Ceiling * V1ScaleFactor);
+
+	float     FloorStep = -(Floor * Steps);
+	float     FloorStart = m_HalfScreenHeight - (Floor * V1ScaleFactor);
+
+	SDL_Color color = getWallColor(seg.pLinedef->pRightSidedef->MiddleTexture);
+	setDrawColor(color.r, color.g, color.b);
+
+	int iXCurrent = V1XScreen;
+	while (iXCurrent <= V2XScreen) {
+		SDL_RenderDrawLine(m_pRenderer, iXCurrent, CeilingEnd, iXCurrent, FloorStart);
+		++iXCurrent;
+
+		CeilingEnd += CeilingStep;
+		FloorStart += FloorStep;
+	}
+}
+
+float ViewRenderer::getScaleFactor(int VXScreen, Angle SegToNormalAngle, float DistanceToNormal) {
+	static float MAX_SCALEFACTOR = 64.0f;
+	static float MIN_SCALEFACTOR = 0.00390625f;
+
+	Angle Angle90(90);
+
+	Angle ScreenXAngle = m_ScreenXToAngle[VXScreen];
+	Angle SkewAngle = m_ScreenXToAngle[VXScreen] + m_pPlayer->getAngle() - SegToNormalAngle;
+
+	float ScreenXAngleCos = ScreenXAngle.getCosValue();
+	float SkewAngleCos = SkewAngle.getCosValue();
+	float ScaleFactor = (m_iDistancePlayerToScreen * SkewAngleCos) / (DistanceToNormal * ScreenXAngleCos);
+
+	if (ScaleFactor > MAX_SCALEFACTOR) {
+		ScaleFactor = MAX_SCALEFACTOR;
+	} else if (MIN_SCALEFACTOR > ScaleFactor) {
+		ScaleFactor = MIN_SCALEFACTOR;
+	}
+
+	return ScaleFactor;
+}
+
+void ViewRenderer::calculateWallHeightSimple(Seg &seg, int V1XScreen, int V2XScreen, Angle V1Angle, Angle V2Angle) {
+	// We have V1 and V2, do calculations for V1 and V2 sepratly then interpolate values in between
+	float DistanceToV1 = m_pPlayer->distanceToPoint(*seg.pStartVertex);
+	float DistanceToV2 = m_pPlayer->distanceToPoint(*seg.pEndVertex);
+
+	// Special Case partial seg on the left
+	if (V1XScreen <= 0) {
+		partialSeg(seg, V1Angle, V2Angle, DistanceToV1, true);
+	}
+
+	// Special Case partial seg on the right
+	if (V2XScreen >= 319) {
+		partialSeg(seg, V1Angle, V2Angle, DistanceToV2, false);
+	}
+
+	float CeilingV1OnScreen;
+	float FloorV1OnScreen;
+	float CeilingV2OnScreen;
+	float FloorV2OnScreen;
+
+	calculateCeilingFloorHeight(seg, V1XScreen, DistanceToV1, CeilingV1OnScreen, FloorV1OnScreen);
+	calculateCeilingFloorHeight(seg, V2XScreen, DistanceToV2, CeilingV2OnScreen, FloorV2OnScreen);
+
+	SDL_Color color = { 255,255,255 };
+	// SDL_Color color = getWallColor(seg.pLinedef->pRightSidedef->MiddleTexture);
+	setDrawColor(color.r, color.g, color.b);
+
+	SDL_RenderDrawLine(m_pRenderer, V1XScreen, CeilingV1OnScreen, V1XScreen, FloorV1OnScreen);
+	SDL_RenderDrawLine(m_pRenderer, V2XScreen, CeilingV2OnScreen, V2XScreen, FloorV2OnScreen);
+	SDL_RenderDrawLine(m_pRenderer, V1XScreen, CeilingV1OnScreen, V2XScreen, CeilingV2OnScreen);
+	SDL_RenderDrawLine(m_pRenderer, V1XScreen, FloorV1OnScreen, V2XScreen, FloorV2OnScreen);
+}
+
+void ViewRenderer::calculateCeilingFloorHeight(Seg &seg, int &VXScreen, float &DistanceToV, float &CeilingVOnScreen, float &FloorVOnScreen) {
+	float Ceiling = seg.pRightSector->CeilingHeight - m_pPlayer->getZPosition();
+	float Floor = seg.pRightSector->FloorHeight - m_pPlayer->getZPosition();
+
+	Angle VScreenAngle = m_ScreenXToAngle[VXScreen];
+
+	float DistanceToVScreen = m_iDistancePlayerToScreen / VScreenAngle.getCosValue();
+
+	CeilingVOnScreen = (abs(Ceiling) * DistanceToVScreen) / DistanceToV;
+	FloorVOnScreen = (abs(Floor) * DistanceToVScreen) / DistanceToV;
+
+	if (Ceiling > 0) {
+		CeilingVOnScreen = m_HalfScreenHeight - CeilingVOnScreen;
+	} else {
+		CeilingVOnScreen += m_HalfScreenHeight;
+	}
+
+	if (Floor > 0) {
+		FloorVOnScreen = m_HalfScreenHeight - FloorVOnScreen;
+	} else {
+		FloorVOnScreen += m_HalfScreenHeight;
+	}
+}
+
+void ViewRenderer::partialSeg(Seg &seg, Angle &V1Angle, Angle &V2Angle, float &DistanceToV, bool IsLeftSide) {
+	float SideC = sqrt(pow(seg.pStartVertex->XPosition - seg.pEndVertex->XPosition, 2) +
+	                   pow(seg.pStartVertex->YPosition - seg.pEndVertex->YPosition, 2));
+	Angle V1toV2Span = V1Angle - V2Angle;
+	float SINEAngleB = DistanceToV * V1toV2Span.getSinValue() / SideC;
+	Angle AngleB(asinf(SINEAngleB) * 180.0 / M_PI);
+	Angle AngleA(180 - V1toV2Span.getValue() - AngleB.getValue());
+
+	Angle AngleVToFOV;
+	if (IsLeftSide) {
+		AngleVToFOV = V1Angle - (m_pPlayer->getAngle() + 45);
+	} else {
+		AngleVToFOV = (m_pPlayer->getAngle() - 45) - V2Angle;
+	}
+
+	Angle NewAngleB(180 - AngleVToFOV.getValue() - AngleA.getValue());
+	DistanceToV = DistanceToV * AngleA.getSinValue() / NewAngleB.getSinValue();
+}
+
+void ViewRenderer::renderSolidWall(Seg &seg, int XStart, int XStop) {
+	int iXCurrent = XStart;
+
+	SDL_Color color = getWallColor(seg.pLinedef->pRightSidedef->MiddleTexture);
+	setDrawColor(color.r, color.g, color.b);
+	while (iXCurrent <= XStop) {
+		SDL_RenderDrawLine(m_pRenderer, iXCurrent, 10, iXCurrent, 20);
+		++iXCurrent;
+	}
 }
 
 void ViewRenderer::renderAutoMap() {
@@ -134,27 +298,16 @@ void ViewRenderer::renderAutoMap() {
 
 void ViewRenderer::render3DView() { m_pMap->render3DView(); }
 
-void ViewRenderer::drawSolidWall(SolidSegmentData &visibleSeg) {
-	SDL_Color color = getWallColor(visibleSeg.seg.pLinedef->pRightSidedef->MiddleTexture);
-	SDL_Rect Rect = {visibleSeg.XStart, 0, visibleSeg.XEnd - visibleSeg.XStart + 1, m_iRenderYSize};
-	setDrawColor(color.r, color.g, color.b);
-	SDL_RenderFillRect(m_pRenderer, &Rect);
-	// SDL_RenderPresent(m_pRenderer);
-	// SDL_Delay(1000);
-}
-
 int ViewRenderer::angleToScreen(Angle angle) {
-	Angle tmpAngle = angle;
-	int   iX = 0;
+	int iX = 0;
 
 	if (angle > 90) {
 		angle -= 90;
-		iX = 160 - round(tanf(angle.getValue() * M_PI / 180.f) * 160);
+		iX = m_iDistancePlayerToScreen - round(angle.getTanValue() * m_HalfScreenWidth);
 	} else {
 		angle = 90 - angle.getValue();
-		float f = tanf(angle.getValue());
-		iX = round(tanf(angle.getValue() * M_PI / 180.f) * 160);
-		iX += 160;
+		iX = round(angle.getTanValue() * m_HalfScreenWidth);
+		iX += m_iDistancePlayerToScreen;
 	}
 
 	return iX;

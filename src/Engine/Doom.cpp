@@ -44,8 +44,10 @@ void Engine::Doom::render() {
 void Engine::Doom::keyPressed(SDL_Event &event) {
 	switch (event.key.keysym.sym) {
 	case SDLK_UP:
+		m_pPlayer->moveForward();
 		break;
 	case SDLK_DOWN:
+		m_pPlayer->moveBackward();
 		break;
 	case SDLK_LEFT:
 		m_pPlayer->rotateLeft();
@@ -65,17 +67,15 @@ void Engine::Doom::keyPressed(SDL_Event &event) {
 	}
 }
 
-void Engine::Doom::keyReleased(SDL_Event &event)
-{
-    switch (event.key.keysym.sym)
-    {
-    case SDLK_TAB:
-        m_bRenderAutoMap = false;
-        break;
+void Engine::Doom::keyReleased(SDL_Event &event) {
+	switch (event.key.keysym.sym) {
+	case SDLK_TAB:
+		m_bRenderAutoMap = false;
+		break;
 
-    default:
-        break;
-    }
+	default:
+		break;
+	}
 }
 
 void Engine::Doom::quit() { m_bIsOver = true; }

@@ -209,9 +209,9 @@ void Map::renderSubsector(int iSubsectorID) {
 
 	for (int i = 0; i < subsector.SegCount; i++) {
 		Seg  &seg = m_Segs[subsector.FirstSegID + i];
-		Angle V1Angle, V2Angle;
-		if (m_pPlayer->clipVertexesInFOV(*(seg.pStartVertex), *(seg.pEndVertex), V1Angle, V2Angle)) {
-			m_pViewRenderer->addWallInFOV(seg, V1Angle, V2Angle);
+		Angle V1Angle, V2Angle, V1AngleFromPlayer, V2AngleFromPlayer;
+		if (m_pPlayer->clipVertexesInFOV(*(seg.pStartVertex), *(seg.pEndVertex), V1Angle, V2Angle, V1AngleFromPlayer, V2AngleFromPlayer)) {
+			m_pViewRenderer->addWallInFOV(seg, V1Angle, V2Angle, V1AngleFromPlayer, V2AngleFromPlayer);
 		}
 	}
 }

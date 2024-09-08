@@ -1,32 +1,36 @@
 #pragma once
 
-class Angle
-{
-public:
-    Angle();
-    Angle(float angle);
-    ~Angle();
+class Angle {
+  public:
+	Angle();
+	Angle(float angle);
+	~Angle();
 
-    Angle operator=(const float& rhs);
-    Angle operator+(const Angle& rhs);
-    Angle operator-(const Angle& rhs);
-    Angle operator-();
-    Angle& operator+=(const float& rhs);
-    Angle& operator-=(const float& rhs);
+	Angle  operator=(const float &rhs);
+	Angle  operator+(const Angle &rhs);
+	Angle  operator-(const Angle &rhs);
+	Angle  operator-();
+	Angle &operator+=(const float &rhs);
+	Angle &operator-=(const float &rhs);
 
-    bool operator<(const Angle& rhs);
-    bool operator<(const float& rhs);
-    bool operator<=(const Angle& rhs);
-    bool operator<=(const float& rhs);
-    bool operator>(const Angle& rhs);
-    bool operator>(const float& rhs);
-    bool operator>=(const Angle& rhs);
-    bool operator>=(const float& rhs);
+	bool operator<(const Angle &rhs);
+	bool operator<(const float &rhs);
+	bool operator<=(const Angle &rhs);
+	bool operator<=(const float &rhs);
+	bool operator>(const Angle &rhs);
+	bool operator>(const float &rhs);
+	bool operator>=(const Angle &rhs);
+	bool operator>=(const float &rhs);
 
-    float getValue();
+	float getValue();
+	float getCosValue();
+	float getSinValue();
+	float getTanValue();
+	float getSignedValue();
 
-protected:
-    float m_Angle;
+  private:
+	float m_Angle;
 
-    void normalize360();
+  protected:
+	void normalize360();
 };
