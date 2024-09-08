@@ -68,6 +68,7 @@ void Engine::Game::processInput() {
 			}
 		}
 	}
+	m_pDoomEngine->updateKeyStatus(SDL_GetKeyboardState(NULL));
 }
 
 void Engine::Game::render() { m_pDoomEngine->render(); }

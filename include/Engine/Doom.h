@@ -15,6 +15,7 @@ class Doom {
 	~Doom();
 
 	virtual void render();
+	virtual void updateKeyStatus(const Uint8 *KeyStates);
 	virtual void keyPressed(SDL_Event &event);
 	virtual void keyReleased(SDL_Event &event);
 	virtual void quit();
@@ -38,7 +39,7 @@ class Doom {
 	bool m_bRenderAutoMap;
 
 	SDL_Renderer *m_pRenderer;
-	WAD::Loader     m_WADLoader;
+	WAD::Loader   m_WADLoader;
 	Map          *m_pMap;
 	Player       *m_pPlayer;
 	Things       *m_pThings;

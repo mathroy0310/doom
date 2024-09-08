@@ -41,19 +41,45 @@ void Engine::Doom::render() {
 	m_pViewRenderer->render(m_bRenderAutoMap);
 }
 
+void Engine::Doom::updateKeyStatus(const Uint8 *KeyStates) {
+	if (KeyStates[SDL_SCANCODE_UP]) {
+		m_pPlayer->moveForward();
+	}
+
+	if (KeyStates[SDL_SCANCODE_DOWN]) {
+		m_pPlayer->moveBackward();
+	}
+
+	if (KeyStates[SDL_SCANCODE_LEFT]) {
+		m_pPlayer->rotateLeft();
+	}
+
+	if (KeyStates[SDL_SCANCODE_RIGHT]) {
+		m_pPlayer->rotateRight();
+	}
+
+	if (KeyStates[SDL_SCANCODE_Z]) {
+		m_pPlayer->fly();
+	}
+
+	if (KeyStates[SDL_SCANCODE_X]) {
+		m_pPlayer->sink();
+	}
+}
+
 void Engine::Doom::keyPressed(SDL_Event &event) {
 	switch (event.key.keysym.sym) {
 	case SDLK_UP:
-		m_pPlayer->moveForward();
+		// m_pPlayer->moveForward();
 		break;
 	case SDLK_DOWN:
-		m_pPlayer->moveBackward();
+		// m_pPlayer->moveBackward();
 		break;
 	case SDLK_LEFT:
-		m_pPlayer->rotateLeft();
+		// m_pPlayer->rotateLeft();
 		break;
 	case SDLK_RIGHT:
-		m_pPlayer->rotateRight();
+		// m_pPlayer->rotateRight();
 		break;
 	case SDLK_TAB:
 		m_bRenderAutoMap = true;

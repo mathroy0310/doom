@@ -20,10 +20,11 @@ void Map::init() {
 	buildLinedef();
 	buildSeg();
 }
+
 void Map::buildSectors() {
 	WADSector wadsector;
 	Sector    sector;
-	for (int i = 0; i < m_pSectors->size(); ++i) {
+	for (size_t i = 0; i < m_pSectors->size(); ++i) {
 		wadsector = m_pSectors->at(i);
 		sector.FloorHeight = wadsector.FloorHeight;
 		sector.CeilingHeight = wadsector.CeilingHeight;
@@ -43,7 +44,7 @@ void Map::buildSectors() {
 void Map::buildSidedefs() {
 	WADSidedef wadsidedef;
 	Sidedef    sidedef;
-	for (int i = 0; i < m_pSidedefs->size(); ++i) {
+	for (size_t i = 0; i < m_pSidedefs->size(); ++i) {
 		wadsidedef = m_pSidedefs->at(i);
 		sidedef.XOffset = wadsidedef.XOffset;
 		sidedef.YOffset = wadsidedef.YOffset;
@@ -64,7 +65,7 @@ void Map::buildLinedef() {
 	WADLinedef wadlinedef;
 	Linedef    linedef;
 
-	for (int i = 0; i < m_pLinedefs->size(); ++i) {
+	for (size_t i = 0; i < m_pLinedefs->size(); ++i) {
 		wadlinedef = m_pLinedefs->at(i);
 
 		linedef.pStartVertex = &m_Vertexes[wadlinedef.StartVertexID];
@@ -110,8 +111,13 @@ void Map::buildSeg() {
 		Sidedef *pRightSidedef;
 		Sidedef *pLeftSidedef;
 
-		pRightSidedef = seg.pLinedef->pRightSidedef;
-		pLeftSidedef = seg.pLinedef->pLeftSidedef;
+		if (seg.Direction) {
+			pRightSidedef = seg.pLinedef->pLeftSidedef;
+			pLeftSidedef = seg.pLinedef->pRightSidedef;
+		} else {
+			pRightSidedef = seg.pLinedef->pRightSidedef;
+			pLeftSidedef = seg.pLinedef->pLeftSidedef;
+		}
 
 		if (pRightSidedef) {
 			seg.pRightSector = pRightSidedef->pSector;

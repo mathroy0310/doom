@@ -20,7 +20,8 @@ class Player {
 	void moveBackward();
 	void rotateLeft();
 	void rotateRight();
-
+	void fly();
+	void sink();
 	void renderAutoMap();
 
 	int   getID() const;
